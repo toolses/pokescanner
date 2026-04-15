@@ -1,0 +1,23 @@
+services:
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    ports:
+      - "5100:8080"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - SUPABASE_CONNECTION_STRING=${SUPABASE_CONNECTION_STRING}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - DEEPSEEK_API_KEY=${DEEPSEEK_API_KEY}
+    restart: unless-stopped
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    ports:
+      - "4300:4300"
+    depends_on:
+      - api
+    restart: unless-stopped
