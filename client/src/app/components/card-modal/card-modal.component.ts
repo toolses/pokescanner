@@ -1,4 +1,4 @@
-import { Component, ElementRef, input, output, signal, ViewChild } from '@angular/core';
+import { Component, ElementRef, input, output, signal, ViewChild, effect, OnDestroy } from '@angular/core';
 
 export interface CardModalDetails {
   setName?: string;
@@ -14,15 +14,16 @@ export interface CardModalDetails {
   standalone: true,
   template: `
     @if (visible()) {
-      <div class="fixed inset-0 z-[200] flex items-center justify-center"
-           (click)="close.emit()">
+      <div class="fixed inset-0 z-[200] flex items-center justify-center touch-none overscroll-none"
+           (click)="close.emit()"
+           (touchmove)="preventScroll($event)">
         <!-- Backdrop -->
         <div class="absolute inset-0 bg-black/80 backdrop-blur-sm"></div>
 
         <!-- Card wrapper -->
         <div class="relative z-10 p-4" (click)="$event.stopPropagation()">
           <div #cardEl
-               class="card-3d relative w-full max-w-sm sm:max-w-md mx-auto cursor-grab active:cursor-grabbing select-none"
+               class="card-3d relative w-full max-w-sm sm:max-w-md mx-auto cursor-grab active:cursor-grabbing select-none touch-none"
                (pointerdown)="onPointerDown($event)"
                (pointermove)="onPointerMove($event)"
                (pointerup)="onPointerUp()"
@@ -49,7 +50,7 @@ export interface CardModalDetails {
     }
   `],
 })
-export class CardModalComponent {
+export class CardModalComponent implements OnDestroy {
   @ViewChild('cardEl') cardEl!: ElementRef<HTMLElement>;
   @ViewChild('sheenEl') sheenEl!: ElementRef<HTMLElement>;
 
@@ -67,6 +68,50 @@ export class CardModalComponent {
   private rafId = 0;
   private pendingRX = 0;
   private pendingRY = 0;
+  private savedOverflow = '';
+  private savedPosition = '';
+  private savedTop = '';
+  private savedScrollY = 0;
+
+  constructor() {
+    effect(() => {
+      if (this.visible()) {
+        this.lockBody();
+      } else {
+        this.unlockBody();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.unlockBody();
+  }
+
+  preventScroll(e: TouchEvent): void {
+    e.preventDefault();
+  }
+
+  private lockBody(): void {
+    this.savedScrollY = window.scrollY;
+    this.savedOverflow = document.body.style.overflow;
+    this.savedPosition = document.body.style.position;
+    this.savedTop = document.body.style.top;
+
+    document.body.style.overflow = 'hidden';
+    document.body.style.position = 'fixed';
+    document.body.style.top = `-${this.savedScrollY}px`;
+    document.body.style.width = '100%';
+  }
+
+  private unlockBody(): void {
+    if (document.body.style.position !== 'fixed') return;
+
+    document.body.style.overflow = this.savedOverflow;
+    document.body.style.position = this.savedPosition;
+    document.body.style.top = this.savedTop;
+    document.body.style.width = '';
+    window.scrollTo(0, this.savedScrollY);
+  }
 
   onPointerDown(e: PointerEvent): void {
     this.dragging = true;
