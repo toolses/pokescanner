@@ -22,6 +22,10 @@ public static class SetEndpoints
             .WithName("GetSeries")
             .WithSummary("List all TCGdex series");
 
+        group.MapGet("/series/{id}", GetSerie)
+            .WithName("GetSerie")
+            .WithSummary("Get a TCGdex series with its sets");
+
         return app;
     }
 
@@ -47,5 +51,14 @@ public static class SetEndpoints
     {
         var series = await tcgDex.GetSeriesAsync(ct);
         return TypedResults.Ok(series);
+    }
+
+    private static async Task<Results<Ok<TcgDexSerie>, NotFound>> GetSerie(
+        string id, TcgDexService tcgDex, CancellationToken ct)
+    {
+        var serie = await tcgDex.GetSerieAsync(id, ct);
+        if (serie is null)
+            return TypedResults.NotFound();
+        return TypedResults.Ok(serie);
     }
 }

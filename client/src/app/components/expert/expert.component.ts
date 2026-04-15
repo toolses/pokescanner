@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal, ElementRef, viewChild } from '@angular/core';
+import { Component, effect, inject, OnInit, signal, ElementRef, viewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { marked } from 'marked';
@@ -39,7 +39,7 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
         }
 
         @for (msg of messages(); track msg.id) {
-          <div [class]="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
+          <div data-msg [class]="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
             <div [class]="msg.role === 'user'
               ? 'bg-dex-accent text-white rounded-2xl rounded-br-sm px-4 py-2 max-w-[85%]'
               : 'bg-dex-surface text-dex-text rounded-2xl rounded-bl-sm px-4 py-3 w-full border border-dex-surface-light'">
@@ -56,10 +56,10 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
 
           <!-- Card results attached to assistant message -->
           @if (msg.cards?.length) {
-            <div class="flex gap-2 overflow-x-auto pb-2 pl-2 custom-scrollbar max-w-full">
+            <div class="grid grid-cols-4 gap-2 mt-1">
               @for (card of msg.cards; track card.id) {
                 <button (click)="openCardModal(card)"
-                        class="flex-shrink-0 w-20 bg-dex-surface rounded-lg p-1.5 border border-dex-surface-light hover:border-dex-accent transition-colors">
+                        class="bg-dex-surface rounded-lg p-1.5 border border-dex-surface-light hover:border-dex-accent transition-colors">
                   @if (card.image) {
                     <img [src]="card.image + '/high.webp'" [alt]="card.name"
                          class="w-full aspect-[3/4] object-contain rounded bg-dex-bg mb-1" loading="lazy" />
@@ -72,7 +72,7 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
         }
 
         @if (loading()) {
-          <div class="flex justify-start">
+          <div data-msg class="flex justify-start">
             <div class="bg-dex-surface rounded-2xl rounded-bl-sm px-4 py-3 border border-dex-surface-light">
               <div class="flex gap-1">
                 <span class="w-2 h-2 bg-dex-text-muted rounded-full animate-bounce"></span>
@@ -109,29 +109,128 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
   `,
   styles: [`
     :host ::ng-deep .prose-chat {
-      line-height: 1.65;
-      h1, h2, h3, h4 { font-weight: 700; margin-top: 0.75em; margin-bottom: 0.35em; }
-      h1 { font-size: 1.15em; }
-      h2 { font-size: 1.05em; }
-      h3 { font-size: 0.95em; }
-      p { margin-bottom: 0.5em; }
-      ul, ol { padding-left: 1.4em; margin-bottom: 0.5em; }
-      li { margin-bottom: 0.2em; }
-      li > ul, li > ol { margin-top: 0.15em; margin-bottom: 0; }
-      code { background: rgba(255,255,255,0.1); padding: 0.15em 0.35em; border-radius: 4px; font-size: 0.85em; }
-      pre { background: rgba(0,0,0,0.3); padding: 0.6em; border-radius: 6px; overflow-x: auto; margin: 0.5em 0; }
-      pre code { background: none; padding: 0; }
-      strong { font-weight: 700; }
-      em { font-style: italic; }
-      a { color: #e94560; text-decoration: underline; }
-      blockquote { border-left: 3px solid #0f3460; padding-left: 0.6em; margin: 0.5em 0; opacity: 0.85; }
-      table { width: 100%; border-collapse: collapse; margin: 0.5em 0; font-size: 0.85em; }
-      th, td { border: 1px solid rgba(255,255,255,0.1); padding: 0.3em 0.5em; text-align: left; }
-      th { background: rgba(255,255,255,0.05); font-weight: 600; }
+      line-height: 1.7;
+      font-size: 0.875rem;
+    }
+    :host ::ng-deep .prose-chat > *:first-child { margin-top: 0; }
+    :host ::ng-deep .prose-chat > *:last-child { margin-bottom: 0; }
+
+    :host ::ng-deep .prose-chat h1,
+    :host ::ng-deep .prose-chat h2,
+    :host ::ng-deep .prose-chat h3,
+    :host ::ng-deep .prose-chat h4 {
+      font-weight: 700;
+      color: #f0c040;
+      margin-top: 1em;
+      margin-bottom: 0.4em;
+      line-height: 1.3;
+    }
+    :host ::ng-deep .prose-chat h1 { font-size: 1.1em; }
+    :host ::ng-deep .prose-chat h2 { font-size: 1.0em; }
+    :host ::ng-deep .prose-chat h3 { font-size: 0.95em; }
+
+    :host ::ng-deep .prose-chat p {
+      margin-top: 0;
+      margin-bottom: 0.65em;
+    }
+
+    :host ::ng-deep .prose-chat ul {
+      list-style-type: disc;
+      padding-left: 1.4em;
+      margin-bottom: 0.65em;
+    }
+    :host ::ng-deep .prose-chat ol {
+      list-style-type: decimal;
+      padding-left: 1.4em;
+      margin-bottom: 0.65em;
+    }
+    :host ::ng-deep .prose-chat li {
+      margin-bottom: 0.3em;
+    }
+    :host ::ng-deep .prose-chat li > ul,
+    :host ::ng-deep .prose-chat li > ol {
+      margin-top: 0.2em;
+      margin-bottom: 0.1em;
+    }
+    :host ::ng-deep .prose-chat li > ul { list-style-type: circle; }
+
+    :host ::ng-deep .prose-chat strong {
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.95);
+    }
+    :host ::ng-deep .prose-chat em {
+      font-style: italic;
+      color: rgba(255, 255, 255, 0.8);
+    }
+
+    :host ::ng-deep .prose-chat code {
+      background: rgba(255, 255, 255, 0.12);
+      padding: 0.15em 0.4em;
+      border-radius: 4px;
+      font-size: 0.82em;
+      font-family: monospace;
+    }
+    :host ::ng-deep .prose-chat pre {
+      background: rgba(0, 0, 0, 0.4);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 0.75em 1em;
+      border-radius: 8px;
+      overflow-x: auto;
+      margin: 0.6em 0;
+    }
+    :host ::ng-deep .prose-chat pre code {
+      background: none;
+      padding: 0;
+      font-size: 0.85em;
+    }
+
+    :host ::ng-deep .prose-chat blockquote {
+      border-left: 3px solid #f0c040;
+      padding-left: 0.75em;
+      margin: 0.6em 0;
+      opacity: 0.8;
+      font-style: italic;
+    }
+
+    :host ::ng-deep .prose-chat hr {
+      border: none;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      margin: 0.75em 0;
+    }
+
+    :host ::ng-deep .prose-chat a {
+      color: #e94560;
+      text-decoration: underline;
+    }
+
+    :host ::ng-deep .prose-chat table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.65em 0;
+      font-size: 0.85em;
+    }
+    :host ::ng-deep .prose-chat th,
+    :host ::ng-deep .prose-chat td {
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 0.35em 0.6em;
+      text-align: left;
+    }
+    :host ::ng-deep .prose-chat th {
+      background: rgba(255, 255, 255, 0.07);
+      font-weight: 600;
+      color: rgba(255, 255, 255, 0.9);
     }
   `],
 })
 export class ExpertComponent implements OnInit {
+  constructor() {
+    effect(() => {
+      this.messages();
+      this.loading();
+      this.scrollToLatestEntry();
+    });
+  }
+
   private readonly expertService = inject(ExpertService);
   private readonly notifications = inject(NotificationService);
   private readonly sanitizer = inject(DomSanitizer);
@@ -176,16 +275,11 @@ export class ExpertComponent implements OnInit {
 
     this.userInput = '';
 
-    // Scroll to user message
-    this.scrollToLastMessage();
-
     try {
       const response = await this.expertService.ask(q, this.sessionId() ?? undefined);
       if (response.sessionId && !this.sessionId()) {
         this.sessionId.set(response.sessionId);
       }
-      // Scroll to assistant answer
-      this.scrollToLastMessage();
     } catch {
       this.notifications.error('Failed to get a response. Please try again.');
     }
@@ -208,18 +302,17 @@ export class ExpertComponent implements OnInit {
     this.modalVisible.set(true);
   }
 
-  private scrollToLastMessage(): void {
+  private scrollToLatestEntry(): void {
     setTimeout(() => {
       const el = this.messagesContainer()?.nativeElement as HTMLElement | undefined;
       if (!el) return;
-      // Find the last message bubble (direct child divs)
-      const children = el.querySelectorAll(':scope > div');
-      const last = children[children.length - 1] as HTMLElement | undefined;
+      const entries = el.querySelectorAll('[data-msg]');
+      const last = entries[entries.length - 1] as HTMLElement | undefined;
       if (last) {
         last.scrollIntoView({ behavior: 'smooth', block: 'start' });
       } else {
         el.scrollTop = el.scrollHeight;
       }
-    }, 80);
+    }, 50);
   }
 }

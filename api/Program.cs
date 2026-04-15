@@ -9,6 +9,9 @@ using PokeScanner.Api.Endpoints;
 using PokeScanner.Api.Services;
 using PokeScanner.Api.Services.AiProviders;
 
+// Dapper: map snake_case DB columns (e.g. tcgdex_card_id) to PascalCase C# props (TcgdexCardId).
+Dapper.DefaultTypeMap.MatchNamesWithUnderscores = true;
+
 // Npgsql 9.x maps timestamptz to DateTime (UTC) by default; enable legacy
 // behaviour so Dapper can populate DateTimeOffset properties correctly.
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -114,10 +117,10 @@ else
     builder.Services.AddNpgsqlDataSource("Host=localhost;Database=pokescanner_placeholder");
 }
 
-// ── Render support ────────────────────────────────────────────────────────────
-var renderPort = Environment.GetEnvironmentVariable("PORT");
-if (!string.IsNullOrEmpty(renderPort))
-    builder.WebHost.UseUrls($"http://+:{renderPort}");
+// ── Cloud host port binding (Railway / Render / etc.) ─────────────────────
+var hostPort = Environment.GetEnvironmentVariable("PORT");
+if (!string.IsNullOrEmpty(hostPort))
+    builder.WebHost.UseUrls($"http://+:{hostPort}");
 
 // ── Build ─────────────────────────────────────────────────────────────────────
 var app = builder.Build();

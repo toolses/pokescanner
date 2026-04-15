@@ -131,4 +131,10 @@ export class TcgDexService {
       this.http.get<TcgDexSerie[]>(`${this.baseUrl}/sets/series`)
     );
   }
+
+  async getSerie(id: string): Promise<TcgDexSerie> {
+    return firstValueFrom(
+      this.http.get<TcgDexSerie>(`${this.baseUrl}/sets/series/${encodeURIComponent(id)}`)
+    );
+  }
 }

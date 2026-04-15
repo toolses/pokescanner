@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+﻿import { Component, inject, OnInit, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CollectionService } from '../../services/collection.service';
 import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.component';
@@ -47,7 +47,7 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
           </a>
           <a routerLink="/sets"
              class="block bg-dex-surface hover:bg-dex-surface-light text-dex-text font-semibold text-center py-3 rounded-xl transition-colors border border-dex-surface-light">
-            📚 Browse Sets
+            🔍 Search cards/sets
           </a>
         </div>
         <div class="grid grid-cols-2 gap-3">

@@ -179,4 +179,20 @@ public sealed class TcgDexService
             return [];
         }
     }
+
+    public async Task<TcgDexSerie?> GetSerieAsync(string id, CancellationToken ct)
+    {
+        var client = _httpClientFactory.CreateClient("tcgdex");
+        var url = $"{_baseUrl}/series/{Uri.EscapeDataString(id)}";
+
+        try
+        {
+            return await client.GetFromJsonAsync<TcgDexSerie>(url, JsonOpts, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "TcgDexService: GetSerie failed for '{Id}'", id);
+            return null;
+        }
+    }
 }

@@ -25,11 +25,22 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
 
         <!-- Name & Tags -->
         <div class="space-y-2">
-          <h1 class="text-2xl font-bold text-dex-text">{{ card()!.cardName }}</h1>
-          <div class="flex flex-wrap gap-1.5">
-            @if (card()!.setName) {
-              <span class="text-xs bg-dex-surface-light text-dex-text-muted px-2.5 py-1 rounded-full">{{ card()!.setName }}</span>
+          <div class="flex items-center gap-3">
+            <h1 class="text-2xl font-bold text-dex-text">{{ card()!.cardName }}</h1>
+            @if (tcgCard()?.set?.logo || tcgCard()?.set?.symbol) {
+              <div class="flex items-center gap-2 ml-1">
+                @if (tcgCard()!.set!.logo) {
+                  <img [src]="tcgCard()!.set!.logo + '.webp'" [alt]="tcgCard()!.set!.name"
+                       class="h-7 object-contain" />
+                }
+                @if (tcgCard()!.set!.symbol) {
+                  <img [src]="tcgCard()!.set!.symbol + '.webp'" [alt]="tcgCard()!.set!.name + ' symbol'"
+                       class="h-5 object-contain" />
+                }
+              </div>
             }
+          </div>
+          <div class="flex flex-wrap gap-1.5">
             @if (card()!.localId) {
               <span class="text-xs font-mono bg-dex-surface-light text-dex-text-muted px-2.5 py-1 rounded-full">#{{ card()!.localId }}</span>
             }

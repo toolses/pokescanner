@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+﻿import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 @Component({
@@ -26,7 +26,7 @@ export class NavigationComponent {
     { path: '/', icon: '🏠', label: 'Home', exact: true },
     { path: '/scan', icon: '📷', label: 'Scan', exact: false },
     { path: '/collection', icon: '📦', label: 'Collection', exact: false },
-    { path: '/sets', icon: '�', label: 'Search', exact: false },
+    { path: '/sets', icon: '🔍', label: 'Search', exact: false },
     { path: '/expert', icon: '🧠', label: 'Expert', exact: false },
   ];
 }

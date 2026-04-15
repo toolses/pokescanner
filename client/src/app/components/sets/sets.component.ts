@@ -43,27 +43,34 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
             <div class="w-10 h-10 border-4 border-dex-accent border-t-transparent rounded-full animate-spin"></div>
           </div>
         } @else {
-          @if (filteredSets().length === 0) {
+          @if (filteredGroups().length === 0) {
             <div class="text-center py-12 text-dex-text-muted text-sm">No sets match your filters.</div>
           }
-          <div class="space-y-2">
-            @for (set of filteredSets(); track set.id) {
-              <a [routerLink]="['/sets', set.id]"
-                 class="flex items-center gap-3 bg-dex-surface rounded-xl p-3 border border-dex-surface-light hover:border-dex-accent transition-colors">
-                @if (set.logo) {
-                  <img [src]="set.logo + '.webp'" [alt]="set.name"
-                       class="w-16 h-10 object-contain" loading="lazy" />
-                } @else {
-                  <div class="w-16 h-10 bg-dex-bg rounded flex items-center justify-center text-lg">📚</div>
-                }
-                <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-dex-text truncate">{{ set.name }}</p>
-                  @if (set.cardCount) {
-                    <p class="text-xs text-dex-text-muted">{{ set.cardCount.total }} cards</p>
+          <div class="space-y-6">
+            @for (group of filteredGroups(); track group.id) {
+              <div>
+                <h3 class="text-xs font-semibold text-dex-text-muted uppercase tracking-wide mb-2 px-1">{{ group.name }}</h3>
+                <div class="space-y-2">
+                  @for (set of group.sets; track set.id) {
+                    <a [routerLink]="['/sets', set.id]"
+                       class="flex items-center gap-3 bg-dex-surface rounded-xl p-3 border border-dex-surface-light hover:border-dex-accent transition-colors">
+                      @if (set.logo) {
+                        <img [src]="set.logo + '.webp'" [alt]="set.name"
+                             class="w-16 h-10 object-contain" loading="lazy" />
+                      } @else {
+                        <div class="w-16 h-10 bg-dex-bg rounded flex items-center justify-center text-lg">📚</div>
+                      }
+                      <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-dex-text truncate">{{ set.name }}</p>
+                        @if (set.cardCount) {
+                          <p class="text-xs text-dex-text-muted">{{ set.cardCount.total }} cards</p>
+                        }
+                      </div>
+                      <span class="text-dex-text-muted text-sm">→</span>
+                    </a>
                   }
                 </div>
-                <span class="text-dex-text-muted text-sm">→</span>
-              </a>
+              </div>
             }
           </div>
         }
@@ -129,7 +136,7 @@ export class SetsComponent implements OnInit {
   readonly loading = signal(true);
   readonly series = signal<TcgDexSerie[]>([]);
   readonly allSets = signal<TcgDexSetBrief[]>([]);
-  readonly filteredSets = signal<TcgDexSetBrief[]>([]);
+  readonly filteredGroups = signal<{ id: string; name: string; logo: string | null; sets: TcgDexSetBrief[] }[]>([]);
   private setSearchQuery = '';
   selectedSeriesId = '';
 
@@ -146,13 +153,12 @@ export class SetsComponent implements OnInit {
 
   async ngOnInit(): Promise<void> {
     try {
-      const [sets, seriesData] = await Promise.all([
-        this.tcgDexService.getSets(),
-        this.tcgDexService.getSeries(),
-      ]);
-      this.allSets.set(sets);
-      this.series.set(seriesData.reverse()); // newest first
-      this.filteredSets.set(sets);
+      const seriesList = await this.tcgDexService.getSeries();
+      const detailed = await Promise.all(
+        seriesList.map(s => this.tcgDexService.getSerie(s.id).catch(() => ({ ...s, sets: null })))
+      );
+      this.series.set(detailed.reverse()); // newest first
+      this.applySetFilters();
     } finally {
       this.loading.set(false);
     }
@@ -164,17 +170,19 @@ export class SetsComponent implements OnInit {
   }
 
   applySetFilters(): void {
-    let sets = this.allSets();
-    if (this.selectedSeriesId) {
-      const seriesSetIds = new Set(
-        this.series().find(s => s.id === this.selectedSeriesId)?.sets?.map(s => s.id) ?? []
-      );
-      sets = sets.filter(s => seriesSetIds.has(s.id));
-    }
-    if (this.setSearchQuery) {
-      sets = sets.filter(s => s.name.toLowerCase().includes(this.setSearchQuery));
-    }
-    this.filteredSets.set(sets);
+    const query = this.setSearchQuery;
+    const groups = this.series()
+      .filter(s => !this.selectedSeriesId || s.id === this.selectedSeriesId)
+      .map(s => ({
+        id: s.id,
+        name: s.name,
+        logo: s.logo,
+        sets: (s.sets ?? []).filter(set =>
+          !query || set.name.toLowerCase().includes(query)
+        ),
+      }))
+      .filter(g => g.sets.length > 0);
+    this.filteredGroups.set(groups);
   }
 
   async searchCards(event: Event): Promise<void> {

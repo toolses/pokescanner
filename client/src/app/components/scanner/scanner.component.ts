@@ -6,13 +6,14 @@ import { CardScanService, ScanResponse, TcgDexCardBrief } from '../../services/c
 import { CollectionService, AddCollectionCardRequest } from '../../services/collection.service';
 import { TcgDexService, TcgDexCard } from '../../services/tcgdex.service';
 import { NotificationService } from '../../services/notification.service';
+import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.component';
 
 type ScanStep = 'capture' | 'scanning' | 'results' | 'confirm' | 'saving';
 
 @Component({
   selector: 'app-scanner',
   standalone: true,
-  imports: [FormsModule, NgTemplateOutlet],
+  imports: [FormsModule, NgTemplateOutlet, CardModalComponent],
   template: `
     <div class="max-w-lg mx-auto p-4 pb-24">
       <h1 class="text-2xl font-display font-bold text-dex-text mb-6">Scan Card</h1>
@@ -20,7 +21,7 @@ type ScanStep = 'capture' | 'scanning' | 'results' | 'confirm' | 'saving';
       <!-- Step: Capture -->
       @if (step() === 'capture') {
         <div class="flex flex-col items-center gap-4">
-          <div class="w-full aspect-[3/4] bg-dex-surface rounded-2xl border-2 border-dashed border-dex-surface-light flex items-center justify-center overflow-hidden">
+          <div class="w-full max-h-[55vh] aspect-[3/4] bg-dex-surface rounded-2xl border-2 border-dashed border-dex-surface-light flex items-center justify-center overflow-hidden">
             @if (previewUrl()) {
               <img [src]="previewUrl()" alt="Card preview" class="w-full h-full object-contain" />
             } @else {
@@ -102,7 +103,8 @@ type ScanStep = 'capture' | 'scanning' | 'results' | 'confirm' | 'saving';
             <div class="bg-dex-surface rounded-xl overflow-hidden border border-dex-surface-light">
               @if (selectedCardFull()!.image) {
                 <img [src]="selectedCardFull()!.image + '/high.webp'" [alt]="selectedCardFull()!.name"
-                     class="w-full max-h-80 object-contain bg-dex-bg"
+                     class="w-full max-h-80 object-contain bg-dex-bg cursor-pointer"
+                     (click)="openCardModal()"
                      (error)="onImgError($event)" />
               }
               <div class="p-4 space-y-2">
@@ -152,6 +154,13 @@ type ScanStep = 'capture' | 'scanning' | 'results' | 'confirm' | 'saving';
           <p class="text-dex-text-muted">Adding to collection...</p>
         </div>
       }
+      <app-card-modal
+        [imageUrl]="modalImageUrl()"
+        [cardName]="modalCardName()"
+        [visible]="modalVisible()"
+        [details]="modalDetails()"
+        (close)="modalVisible.set(false)" />
+
       <!-- Shared OCR details template -->
       <ng-template #ocrDetails>
         @if (scanResponse()?.scanResult; as scan) {
@@ -168,13 +177,13 @@ type ScanStep = 'capture' | 'scanning' | 'results' | 'confirm' | 'saving';
               <span class="text-dex-text">{{ scan.name ?? '—' }}</span>
               <span class="text-dex-text-muted">Set Code</span>
               <span class="text-dex-text font-mono">{{ scan.setCode ?? '—' }}</span>
-              <span class="text-dex-text-muted">Set ID</span>
-              <span class="text-dex-text font-mono">{{ scan.setId ?? '—' }}</span>
-              <span class="text-dex-text-muted">Local ID</span>
-              <span class="text-dex-text font-mono">{{ scan.localId ?? '—' }}</span>
-              <span class="text-dex-text-muted">Card #</span>
-              <span class="text-dex-text">{{ scan.cardNumber ?? '—' }}</span>
               @if (ocrExpanded()) {
+                <span class="text-dex-text-muted">Set ID</span>
+                <span class="text-dex-text font-mono">{{ scan.setId ?? '—' }}</span>
+                <span class="text-dex-text-muted">Local ID</span>
+                <span class="text-dex-text font-mono">{{ scan.localId ?? '—' }}</span>
+                <span class="text-dex-text-muted">Card #</span>
+                <span class="text-dex-text">{{ scan.cardNumber ?? '—' }}</span>
                 <span class="text-dex-text-muted">Set Name</span>
                 <span class="text-dex-text">{{ scan.setName ?? '—' }}</span>
                 <span class="text-dex-text-muted">HP</span>
@@ -207,6 +216,10 @@ export class ScannerComponent {
   readonly scanResponse = signal<ScanResponse | null>(null);
   readonly selectedCardFull = signal<TcgDexCard | null>(null);
   readonly ocrExpanded = signal(false);
+  readonly modalVisible = signal(false);
+  readonly modalImageUrl = signal('');
+  readonly modalCardName = signal('');
+  readonly modalDetails = signal<CardModalDetails | null>(null);
 
   readonly detectedVariant = signal<string | null>(null);
   selectedCondition = 'near_mint';
@@ -312,6 +325,22 @@ export class ScannerComponent {
       this.notifications.error('Failed to save card.');
       this.step.set('confirm');
     }
+  }
+
+  openCardModal(): void {
+    const card = this.selectedCardFull();
+    if (!card?.image) return;
+    this.modalImageUrl.set(card.image + '/high.webp');
+    this.modalCardName.set(card.name ?? '');
+    this.modalDetails.set({
+      setName: card.set?.name,
+      rarity: card.rarity ?? undefined,
+      hp: card.hp ?? undefined,
+      types: card.types ?? undefined,
+      illustrator: card.illustrator ?? undefined,
+      localId: card.localId ?? undefined,
+    });
+    this.modalVisible.set(true);
   }
 
   reset(): void {

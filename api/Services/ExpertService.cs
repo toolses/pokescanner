@@ -25,6 +25,9 @@ public sealed class ExpertService
         - If you suggest specific cards, explain WHY they're worth considering.
         - If you don't know something, say so honestly.
         - Format your responses with markdown for readability.
+        - IMPORTANT — POKECARDS line: Whenever your response mentions any Pokémon by name — including when discussing specific cards, sets, or answering questions about whether a Pokémon appears in a set — you MUST append this as the absolute last line (nothing after it, no trailing text or punctuation):
+          POKECARDS:PokemonName1|PokemonName2|PokemonName3
+          Use the Pokémon's exact name (e.g. Pikachu, Bulbasaur, Charizard). Include every Pokémon you name, up to a maximum of 8. If your response mentions no Pokémon names at all, omit this line entirely.
 
         User's collection context (if available):
         {COLLECTION_CONTEXT}
@@ -115,11 +118,13 @@ public sealed class ExpertService
                 "SELECT COALESCE(SUM(quantity), 0) FROM collection_cards");
             var unique = await conn.QuerySingleAsync<int>(
                 "SELECT COUNT(DISTINCT tcgdex_card_id) FROM collection_cards");
-            var recent = await conn.QueryAsync<dynamic>(
-                "SELECT card_name, set_name, rarity FROM collection_cards ORDER BY added_at DESC LIMIT 10");
+            var allCards = await conn.QueryAsync<dynamic>(
+                "SELECT card_name, set_name, rarity, quantity, condition FROM collection_cards ORDER BY card_name");
 
-            var recentStr = string.Join("\n", recent.Select(r => $"- {r.card_name} ({r.set_name}, {r.rarity})"));
-            return $"Total cards: {total}, Unique: {unique}\nRecent additions:\n{recentStr}";
+            var cardLines = allCards.Select(r =>
+                $"- {r.card_name} ({r.set_name}, {r.rarity}, {r.condition}, qty: {r.quantity})");
+            var cardStr = string.Join("\n", cardLines);
+            return $"Total cards: {total}, Unique: {unique}\nFull collection:\n{cardStr}";
         }
         catch
         {
