@@ -1,5 +1,5 @@
 ﻿import { Component, inject, OnInit, signal } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { CollectionService } from '../../services/collection.service';
 import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.component';
 
@@ -29,8 +29,8 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
           <p class="text-xs text-dex-text-muted">Sets Collected</p>
         </div>
         <div class="bg-dex-surface rounded-xl p-4 border border-dex-surface-light">
-          <p class="text-2xl font-bold text-dex-gold">\${{ (stats()?.estimatedValue ?? 0).toFixed(2) }}</p>
-          <p class="text-xs text-dex-text-muted">Est. Value</p>
+          <p class="text-2xl font-bold text-dex-gold">€{{ (stats()?.estimatedValue ?? 0).toFixed(2) }}</p>
+          <p class="text-xs text-dex-text-muted">Est. Value (NM)</p>
         </div>
       </div>
 
@@ -68,16 +68,15 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
           <h2 class="text-lg font-bold text-dex-text mb-3">Recently Added</h2>
           <div class="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 custom-scrollbar">
             @for (card of stats()!.recentAdditions; track card.id) {
-              <div class="flex-shrink-0 w-28 bg-dex-surface rounded-xl p-2 border border-dex-surface-light cardhover">
+              <div (click)="goToCard(card.id)"
+                   class="flex-shrink-0 w-28 bg-dex-surface rounded-xl p-2 border border-dex-surface-light cardhover cursor-pointer">
                 @if (card.cardImageUrl) {
                   <img [src]="card.cardImageUrl" [alt]="card.cardName"
-                       class="w-full aspect-[3/4] object-contain rounded-lg bg-dex-bg mb-1 cursor-pointer" loading="lazy"
-                       (click)="openModal(card.cardName, card.cardImageUrl, card)" />
+                       class="w-full aspect-[3/4] object-contain rounded-lg bg-dex-bg mb-1" loading="lazy" />
                 } @else {
                   <div class="w-full aspect-[3/4] rounded-lg bg-dex-bg flex items-center justify-center text-2xl mb-1">🃏</div>
                 }
                 <p class="text-xs text-dex-text truncate">{{ card.cardName }}</p>
-                <a [routerLink]="['/collection', card.id]" class="text-[10px] text-dex-accent hover:underline">View details</a>
               </div>
             }
           </div>
@@ -95,6 +94,7 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
 })
 export class DashboardComponent implements OnInit {
   private readonly collectionService = inject(CollectionService);
+  private readonly router = inject(Router);
   readonly stats = this.collectionService.stats;
 
   readonly modalVisible = signal(false);
@@ -104,6 +104,10 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.collectionService.loadStats();
+  }
+
+  goToCard(id: string): void {
+    this.router.navigate(['/collection', id]);
   }
 
   openModal(name: string, imageUrl: string, card?: any): void {

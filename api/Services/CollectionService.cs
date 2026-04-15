@@ -7,8 +7,13 @@ namespace PokeScanner.Api.Services;
 public sealed class CollectionService
 {
     private readonly NpgsqlDataSource _dataSource;
+    private readonly TcgDexService _tcgDex;
 
-    public CollectionService(NpgsqlDataSource dataSource) => _dataSource = dataSource;
+    public CollectionService(NpgsqlDataSource dataSource, TcgDexService tcgDex)
+    {
+        _dataSource = dataSource;
+        _tcgDex = tcgDex;
+    }
 
     public async Task<IEnumerable<CollectionCard>> GetAllAsync(CancellationToken ct)
     {
@@ -80,16 +85,66 @@ public sealed class CollectionService
         var totalSets = await conn.QuerySingleAsync<int>(
             "SELECT COUNT(DISTINCT set_id) FROM collection_cards WHERE set_id IS NOT NULL");
 
-        var recent = await conn.QueryAsync<CollectionCard>(
-            "SELECT * FROM collection_cards ORDER BY added_at DESC LIMIT 5");
+        var allCards = (await conn.QueryAsync<CollectionCard>(
+            "SELECT * FROM collection_cards ORDER BY added_at DESC")).ToArray();
+
+        var recent = allCards.Take(5).ToArray();
+
+        // Calculate estimated value from TCGDex pricing (Cardmarket avg, fallback TCGPlayer)
+        var estimatedValue = await CalculateEstimatedValueAsync(allCards, ct);
 
         return new CollectionStats
         {
             TotalCards = totalCards,
             UniqueCards = uniqueCards,
             TotalSets = totalSets,
-            EstimatedValue = 0, // TODO: calculate from price_cache
-            RecentAdditions = recent.ToArray(),
+            EstimatedValue = estimatedValue,
+            RecentAdditions = recent,
         };
+    }
+
+    private async Task<decimal> CalculateEstimatedValueAsync(
+        CollectionCard[] cards, CancellationToken ct)
+    {
+        if (cards.Length == 0) return 0;
+
+        // Group by tcgdex_card_id so we only look up each card once
+        var groups = cards
+            .Where(c => !string.IsNullOrEmpty(c.TcgdexCardId))
+            .GroupBy(c => c.TcgdexCardId)
+            .ToArray();
+
+        var total = 0m;
+        var semaphore = new SemaphoreSlim(5); // limit parallel requests
+
+        var tasks = groups.Select(async g =>
+        {
+            await semaphore.WaitAsync(ct);
+            try
+            {
+                var detail = await _tcgDex.GetCardAsync(g.Key, ct);
+                if (detail?.Pricing is null) return 0m;
+
+                var unitPrice =
+                    detail.Pricing.Cardmarket?.Avg
+                    ?? detail.Pricing.Tcgplayer?.Normal?.MarketPrice
+                    ?? 0m;
+
+                var qty = g.Sum(c => c.Quantity);
+                return unitPrice * qty;
+            }
+            catch
+            {
+                return 0m;
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+        });
+
+        var values = await Task.WhenAll(tasks);
+        total = values.Sum();
+        return Math.Round(total, 2);
     }
 }

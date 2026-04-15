@@ -30,17 +30,19 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
         } @else {
           <div class="grid grid-cols-3 gap-3">
             @for (card of cards(); track card.id) {
-              <button (click)="openModal(card)"
-                      class="bg-dex-surface rounded-xl p-2 border border-dex-surface-light cardhover text-left">
+              <div class="bg-dex-surface rounded-xl p-2 border border-dex-surface-light cardhover text-left">
                 @if (card.image) {
                   <img [src]="card.image + '/high.webp'" [alt]="card.name"
-                       class="w-full aspect-[3/4] object-contain rounded-lg bg-dex-bg mb-1" loading="lazy" />
+                       class="w-full aspect-[3/4] object-contain rounded-lg bg-dex-bg mb-1 cursor-pointer" loading="lazy"
+                       (click)="openModal(card)" />
                 } @else {
                   <div class="w-full aspect-[3/4] rounded-lg bg-dex-bg flex items-center justify-center text-2xl mb-1">🃏</div>
                 }
                 <p class="text-xs font-medium text-dex-text truncate">{{ card.name }}</p>
                 <p class="text-[10px] text-dex-text-muted">{{ card.localId }}</p>
-              </button>
+                <a [routerLink]="['/cards', card.id]"
+                   class="block w-full text-center text-[10px] font-semibold text-dex-accent bg-dex-accent/10 hover:bg-dex-accent/20 rounded-md py-1 mt-1 transition-colors">View details</a>
+              </div>
             }
           </div>
         }

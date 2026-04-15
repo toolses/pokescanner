@@ -155,7 +155,10 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
         <!-- Pricing -->
         @if (tcgCard()?.pricing?.tcgplayer || tcgCard()?.pricing?.cardmarket) {
           <div class="bg-dex-surface rounded-xl p-4 border border-dex-surface-light">
-            <h2 class="text-sm font-bold text-dex-gold uppercase tracking-wider mb-3">Pricing</h2>
+            <div class="flex items-baseline gap-2 mb-3">
+              <h2 class="text-sm font-bold text-dex-gold uppercase tracking-wider">Pricing</h2>
+              <span class="text-[10px] text-dex-text-muted">Ungraded · Near Mint</span>
+            </div>
             <div class="grid grid-cols-2 gap-3">
               @if (tcgCard()!.pricing!.tcgplayer?.normal?.marketPrice) {
                 <div class="bg-dex-bg rounded-lg p-3 text-center">

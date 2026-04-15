@@ -32,6 +32,11 @@ export const routes: Routes = [
       import('./components/set-detail/set-detail.component').then(m => m.SetDetailComponent),
   },
   {
+    path: 'cards/:id',
+    loadComponent: () =>
+      import('./components/tcg-card-detail/tcg-card-detail.component').then(m => m.TcgCardDetailComponent),
+  },
+  {
     path: 'wishlist',
     loadComponent: () =>
       import('./components/wishlist/wishlist.component').then(m => m.WishlistComponent),
