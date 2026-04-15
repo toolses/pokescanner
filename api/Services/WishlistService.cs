@@ -24,10 +24,10 @@ public sealed class WishlistService
             """
             INSERT INTO wishlist_cards
                 (tcgdex_card_id, card_name, set_id, set_name, local_id, rarity,
-                 card_image_url, priority, notes)
+                 card_image_url, set_logo, set_symbol, priority, notes)
             VALUES
                 (@TcgdexCardId, @CardName, @SetId, @SetName, @LocalId, @Rarity,
-                 @CardImageUrl, @Priority, @Notes)
+                 @CardImageUrl, @SetLogo, @SetSymbol, @Priority, @Notes)
             RETURNING id
             """, req);
 

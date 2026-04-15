@@ -37,6 +37,8 @@ public record WishlistCard
     public string? LocalId { get; init; }
     public string? Rarity { get; init; }
     public string? CardImageUrl { get; init; }
+    public string? SetLogo { get; init; }
+    public string? SetSymbol { get; init; }
     public int Priority { get; init; }
     public string? Notes { get; init; }
     public DateTimeOffset AddedAt { get; init; }
@@ -78,6 +80,8 @@ public record AddWishlistCardRequest(
     string? LocalId,
     string? Rarity,
     string? CardImageUrl,
+    string? SetLogo = null,
+    string? SetSymbol = null,
     int Priority = 0,
     string? Notes = null);
 

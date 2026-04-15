@@ -1,6 +1,7 @@
 import { Component, inject, OnInit, signal, computed } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { CollectionService, CollectionCard } from '../../services/collection.service';
+import { SetCacheService } from '../../services/set-cache.service';
 import { NotificationService } from '../../services/notification.service';
 
 @Component({
@@ -49,8 +50,15 @@ import { NotificationService } from '../../services/notification.service';
                 <div class="w-full aspect-[3/4] rounded-lg bg-dex-bg flex items-center justify-center text-2xl mb-1">🃏</div>
               }
               <p class="text-xs font-medium text-dex-text truncate">{{ card.cardName }}</p>
-              @if (card.setName) {
-                <p class="text-[10px] text-dex-text-muted truncate">{{ card.setName }}</p>
+              @if (card.setId && setCache.getSet(card.setId); as set) {
+                <div class="flex items-center gap-1 mt-0.5">
+                  @if (set.symbol) {
+                    <img [src]="set.symbol + '.webp'" [alt]="set.name" class="h-3 w-3 object-contain" loading="lazy" />
+                  }
+                  @if (set.logo) {
+                    <img [src]="set.logo + '.webp'" [alt]="set.name" class="h-3 object-contain" loading="lazy" />
+                  }
+                </div>
               }
             </a>
           }
@@ -62,6 +70,7 @@ import { NotificationService } from '../../services/notification.service';
 export class CollectionComponent implements OnInit {
   private readonly collectionService = inject(CollectionService);
   private readonly notifications = inject(NotificationService);
+  readonly setCache = inject(SetCacheService);
 
   readonly loading = this.collectionService.loading;
   private readonly searchQuery = signal('');
@@ -86,6 +95,7 @@ export class CollectionComponent implements OnInit {
 
   ngOnInit(): void {
     this.collectionService.loadCollection();
+    this.setCache.ensureLoaded();
   }
 
   onSearch(event: Event): void {

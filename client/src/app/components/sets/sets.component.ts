@@ -1,8 +1,10 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnInit, OnDestroy, signal, ViewChild, ElementRef } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { TcgDexService, TcgDexSetBrief, TcgDexSerie } from '../../services/tcgdex.service';
 import { TcgDexCardBrief } from '../../services/card-scan.service';
+import { SetCacheService } from '../../services/set-cache.service';
+import { SetsStateService } from '../../services/sets-state.service';
 import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.component';
 
 @Component({
@@ -27,6 +29,7 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
         <!-- Filters -->
         <div class="flex gap-2">
           <input type="text" placeholder="Filter sets..."
+                 [value]="setSearchQuery"
                  (input)="onSetSearch($event)"
                  class="flex-1 bg-dex-surface border border-dex-surface-light rounded-lg px-3 py-2 text-dex-text text-sm placeholder-dex-text-muted" />
           <select [(ngModel)]="selectedSeriesId" (ngModelChange)="applySetFilters()"
@@ -78,7 +81,7 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
         <!-- Card Search Tab -->
         <form (submit)="searchCards($event)" class="flex gap-2">
           <input type="text" placeholder="Search cards by name..."
-                 #cardInput
+                 #cardInput [value]="cardSearchQuery"
                  class="flex-1 bg-dex-surface border border-dex-surface-light rounded-lg px-3 py-2 text-dex-text text-sm placeholder-dex-text-muted" />
           <button type="submit"
                   class="bg-dex-accent hover:bg-dex-accent-dark text-white font-semibold px-4 py-2 rounded-lg text-sm transition-colors"
@@ -104,6 +107,16 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
                   <div class="w-full aspect-[3/4] rounded-lg bg-dex-bg flex items-center justify-center text-2xl mb-1">🃏</div>
                 }
                 <p class="text-xs font-medium text-dex-text truncate">{{ card.name }}</p>
+                @if (setCache.getSet(setCache.setIdFromCardId(card.id)); as set) {
+                  <div class="flex items-center gap-1 mt-0.5">
+                    @if (set.symbol) {
+                      <img [src]="set.symbol + '.webp'" [alt]="set.name" class="h-3 w-3 object-contain" loading="lazy" />
+                    }
+                    @if (set.logo) {
+                      <img [src]="set.logo + '.webp'" [alt]="set.name" class="h-3 object-contain" loading="lazy" />
+                    }
+                  </div>
+                }
                 <a [routerLink]="['/cards', card.id]"
                    class="block w-full text-center text-[10px] font-semibold text-dex-accent bg-dex-accent/10 hover:bg-dex-accent/20 rounded-md py-1 mt-1 transition-colors">View details</a>
               </div>
@@ -129,8 +142,10 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
       (close)="modalVisible.set(false)" />
   `,
 })
-export class SetsComponent implements OnInit {
+export class SetsComponent implements OnInit, OnDestroy {
   private readonly tcgDexService = inject(TcgDexService);
+  readonly setCache = inject(SetCacheService);
+  private readonly state = inject(SetsStateService);
 
   readonly activeTab = signal<'sets' | 'cards'>('cards');
 
@@ -139,13 +154,14 @@ export class SetsComponent implements OnInit {
   readonly series = signal<TcgDexSerie[]>([]);
   readonly allSets = signal<TcgDexSetBrief[]>([]);
   readonly filteredGroups = signal<{ id: string; name: string; logo: string | null; sets: TcgDexSetBrief[] }[]>([]);
-  private setSearchQuery = '';
+  setSearchQuery = '';
   selectedSeriesId = '';
 
   // Card search tab
   readonly cardSearchLoading = signal(false);
   readonly cardSearchResults = signal<TcgDexCardBrief[]>([]);
   readonly cardSearchDone = signal(false);
+  cardSearchQuery = '';
 
   // Modal
   readonly modalVisible = signal(false);
@@ -154,16 +170,42 @@ export class SetsComponent implements OnInit {
   readonly modalDetails = signal<CardModalDetails | null>(null);
 
   async ngOnInit(): Promise<void> {
+    // Restore state
+    this.activeTab.set(this.state.activeTab);
+    this.selectedSeriesId = this.state.selectedSeriesId;
+    this.setSearchQuery = this.state.setSearchQuery;
+    this.cardSearchQuery = this.state.cardSearchQuery;
+    this.cardSearchResults.set(this.state.cardSearchResults);
+    this.cardSearchDone.set(this.state.cardSearchDone);
+
+    this.setCache.ensureLoaded();
+
     try {
-      const seriesList = await this.tcgDexService.getSeries();
-      const detailed = await Promise.all(
-        seriesList.map(s => this.tcgDexService.getSerie(s.id).catch(() => ({ ...s, sets: null })))
-      );
-      this.series.set(detailed.reverse()); // newest first
-      this.applySetFilters();
+      if (this.state.cachedSeries) {
+        this.series.set(this.state.cachedSeries);
+        this.applySetFilters();
+      } else {
+        const seriesList = await this.tcgDexService.getSeries();
+        const detailed = await Promise.all(
+          seriesList.map(s => this.tcgDexService.getSerie(s.id).catch(() => ({ ...s, sets: null })))
+        );
+        const sorted = detailed.reverse();
+        this.series.set(sorted);
+        this.state.cachedSeries = sorted;
+        this.applySetFilters();
+      }
     } finally {
       this.loading.set(false);
     }
+  }
+
+  ngOnDestroy(): void {
+    this.state.activeTab = this.activeTab();
+    this.state.selectedSeriesId = this.selectedSeriesId;
+    this.state.setSearchQuery = this.setSearchQuery;
+    this.state.cardSearchQuery = this.cardSearchQuery;
+    this.state.cardSearchResults = this.cardSearchResults();
+    this.state.cardSearchDone = this.cardSearchDone();
   }
 
   onSetSearch(event: Event): void {
@@ -194,6 +236,7 @@ export class SetsComponent implements OnInit {
     const query = input.value.trim();
     if (!query) return;
 
+    this.cardSearchQuery = query;
     this.cardSearchLoading.set(true);
     this.cardSearchDone.set(false);
     try {

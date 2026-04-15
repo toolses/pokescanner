@@ -2,6 +2,7 @@ import { Component, inject, OnInit, signal, input, computed } from '@angular/cor
 import { Router, RouterLink } from '@angular/router';
 import { CollectionService, CollectionCard } from '../../services/collection.service';
 import { TcgDexService, TcgDexCard } from '../../services/tcgdex.service';
+import { WishlistService } from '../../services/wishlist.service';
 import { NotificationService } from '../../services/notification.service';
 import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.component';
 
@@ -178,9 +179,9 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
 
         <!-- Actions -->
         <div class="flex gap-3">
-          <button (click)="addToWishlist()"
+          <button (click)="toggleWishlist()"
                   class="flex-1 bg-dex-surface border border-dex-gold text-dex-gold font-semibold py-2.5 rounded-xl hover:bg-dex-gold/10 transition-colors">
-            ⭐ Wishlist
+            {{ isWishlisted() ? '⭐' : '☆' }} Wishlist
           </button>
           <button (click)="deleteCard()"
                   class="bg-dex-surface border border-red-500 text-red-500 font-semibold py-2.5 px-5 rounded-xl hover:bg-red-500/10 transition-colors">
@@ -205,12 +206,17 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
 export class CardDetailComponent implements OnInit {
   private readonly collectionService = inject(CollectionService);
   private readonly tcgDexService = inject(TcgDexService);
+  private readonly wishlistService = inject(WishlistService);
   private readonly notifications = inject(NotificationService);
   private readonly router = inject(Router);
 
   readonly id = input.required<string>();
   readonly card = signal<CollectionCard | null>(null);
   readonly tcgCard = signal<TcgDexCard | null>(null);
+  readonly isWishlisted = computed(() => {
+    const c = this.card();
+    return c?.tcgdexCardId ? this.wishlistService.isWishlisted(c.tcgdexCardId) : false;
+  });
   readonly modalVisible = signal(false);
   readonly modalImageUrl = signal('');
   readonly modalCardName = signal('');
@@ -225,6 +231,7 @@ export class CardDetailComponent implements OnInit {
   readonly description = computed(() => this.card()?.description ?? this.tcgCard()?.description ?? null);
 
   async ngOnInit(): Promise<void> {
+    this.wishlistService.loadWishlist();
     await this.collectionService.loadCollection();
     const found = this.collectionService.cards().find(c => String(c.id) === this.id());
     if (found) {
@@ -242,10 +249,31 @@ export class CardDetailComponent implements OnInit {
     return condition.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
   }
 
-  addToWishlist(): void {
+  async toggleWishlist(): Promise<void> {
     const c = this.card();
     if (!c) return;
-    this.router.navigate(['/wishlist']);
+    try {
+      if (this.isWishlisted()) {
+        await this.wishlistService.removeByTcgdexId(c.tcgdexCardId);
+        this.notifications.success('Removed from wishlist.');
+      } else {
+        const tcg = this.tcgCard();
+        await this.wishlistService.addCard({
+          tcgdexCardId: c.tcgdexCardId,
+          cardName: c.cardName,
+          setId: c.setId ?? undefined,
+          setName: c.setName ?? undefined,
+          localId: c.localId ?? undefined,
+          rarity: c.rarity ?? undefined,
+          cardImageUrl: c.cardImageUrl ?? undefined,
+          setLogo: tcg?.set?.logo ?? undefined,
+          setSymbol: tcg?.set?.symbol ?? undefined,
+        });
+        this.notifications.success('Added to wishlist!');
+      }
+    } catch {
+      this.notifications.error('Failed to update wishlist.');
+    }
   }
 
   async deleteCard(): Promise<void> {

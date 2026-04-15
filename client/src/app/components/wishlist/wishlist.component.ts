@@ -1,12 +1,13 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { WishlistService, WishlistCard } from '../../services/wishlist.service';
 import { NotificationService } from '../../services/notification.service';
 
 @Component({
   selector: 'app-wishlist',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, RouterLink],
   template: `
     <div class="max-w-lg mx-auto p-4 space-y-4">
       <h1 class="text-2xl font-display font-bold text-dex-text">Wishlist</h1>
@@ -48,18 +49,32 @@ import { NotificationService } from '../../services/notification.service';
         <div class="space-y-2">
           @for (card of cards(); track card.id) {
             <div class="bg-dex-surface rounded-xl p-3 border border-dex-surface-light flex items-center gap-3">
-              <div class="flex-1 min-w-0">
-                <p class="text-sm font-medium text-dex-text">{{ card.cardName }}</p>
+              @if (card.cardImageUrl) {
+                <a [routerLink]="['/cards', card.tcgdexCardId]" class="flex-shrink-0">
+                  <img [src]="card.cardImageUrl + '/high.webp'" [alt]="card.cardName"
+                       class="w-14 aspect-[3/4] object-contain rounded-lg bg-dex-bg" loading="lazy" />
+                </a>
+              }
+              <a [routerLink]="['/cards', card.tcgdexCardId]" class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <p class="text-sm font-medium text-dex-text truncate">{{ card.cardName }}</p>
+                  @if (card.setLogo) {
+                    <img [src]="card.setLogo + '.webp'" [alt]="card.setName" class="h-4 object-contain flex-shrink-0" />
+                  }
+                  @if (card.setSymbol) {
+                    <img [src]="card.setSymbol + '.webp'" [alt]="'symbol'" class="h-3.5 object-contain flex-shrink-0" />
+                  }
+                </div>
                 @if (card.setName) {
                   <p class="text-xs text-dex-text-muted">{{ card.setName }}</p>
                 }
-              </div>
-              <span class="text-xs px-2 py-0.5 rounded-full"
+              </a>
+              <span class="text-xs px-2 py-0.5 rounded-full flex-shrink-0"
                     [class]="priorityClass(card.priority)">
                 {{ priorityLabel(card.priority) }}
               </span>
-              <button (click)="removeCard(card.id)"
-                      class="text-red-400 hover:text-red-300 text-sm px-2 py-1">
+              <button (click)="removeCard(card.id); $event.stopPropagation()"
+                      class="text-red-400 hover:text-red-300 text-sm px-2 py-1 flex-shrink-0">
                 ✕
               </button>
             </div>

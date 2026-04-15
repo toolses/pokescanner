@@ -1,6 +1,8 @@
-import { Component, inject, OnInit, signal, input } from '@angular/core';
+import { Component, inject, OnInit, signal, input, computed } from '@angular/core';
 import { Location } from '@angular/common';
 import { TcgDexService, TcgDexCard } from '../../services/tcgdex.service';
+import { WishlistService } from '../../services/wishlist.service';
+import { NotificationService } from '../../services/notification.service';
 import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.component';
 
 @Component({
@@ -201,6 +203,12 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
             </div>
           </div>
         }
+
+        <!-- Actions -->
+        <button (click)="toggleWishlist()"
+                class="w-full bg-dex-surface border border-dex-gold text-dex-gold font-semibold py-2.5 rounded-xl hover:bg-dex-gold/10 transition-colors">
+          {{ isWishlisted() ? '⭐' : '☆' }} Wishlist
+        </button>
       } @else if (error()) {
         <div class="text-center py-12 text-red-400 text-sm">Card not found.</div>
       } @else {
@@ -220,17 +228,21 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
 })
 export class TcgCardDetailComponent implements OnInit {
   private readonly tcgDexService = inject(TcgDexService);
+  private readonly wishlistService = inject(WishlistService);
+  private readonly notifications = inject(NotificationService);
   private readonly location = inject(Location);
 
   readonly id = input.required<string>();
   readonly card = signal<TcgDexCard | null>(null);
   readonly error = signal(false);
+  readonly isWishlisted = computed(() => this.wishlistService.isWishlisted(this.id()));
   readonly modalVisible = signal(false);
   readonly modalImageUrl = signal('');
   readonly modalCardName = signal('');
   readonly modalDetails = signal<CardModalDetails | null>(null);
 
   async ngOnInit(): Promise<void> {
+    this.wishlistService.loadWishlist();
     try {
       const details = await this.tcgDexService.getCard(this.id());
       this.card.set(details);
@@ -257,5 +269,31 @@ export class TcgCardDetailComponent implements OnInit {
       localId: c.localId ?? undefined,
     });
     this.modalVisible.set(true);
+  }
+
+  async toggleWishlist(): Promise<void> {
+    const c = this.card();
+    if (!c) return;
+    try {
+      if (this.isWishlisted()) {
+        await this.wishlistService.removeByTcgdexId(c.id);
+        this.notifications.success('Removed from wishlist.');
+      } else {
+        await this.wishlistService.addCard({
+          tcgdexCardId: c.id,
+          cardName: c.name,
+          setId: c.set?.id,
+          setName: c.set?.name,
+          localId: c.localId ?? undefined,
+          rarity: c.rarity ?? undefined,
+          cardImageUrl: c.image ?? undefined,
+          setLogo: c.set?.logo ?? undefined,
+          setSymbol: c.set?.symbol ?? undefined,
+        });
+        this.notifications.success('Added to wishlist!');
+      }
+    } catch {
+      this.notifications.error('Failed to update wishlist.');
+    }
   }
 }

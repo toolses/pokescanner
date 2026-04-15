@@ -1,6 +1,7 @@
 ﻿import { Component, inject, OnInit, signal } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
 import { CollectionService } from '../../services/collection.service';
+import { SetCacheService } from '../../services/set-cache.service';
 import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.component';
 
 @Component({
@@ -77,6 +78,16 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
                   <div class="w-full aspect-[3/4] rounded-lg bg-dex-bg flex items-center justify-center text-2xl mb-1">🃏</div>
                 }
                 <p class="text-xs text-dex-text truncate">{{ card.cardName }}</p>
+                @if (card.setId && setCache.getSet(card.setId); as set) {
+                  <div class="flex items-center gap-1 mt-0.5">
+                    @if (set.symbol) {
+                      <img [src]="set.symbol + '.webp'" [alt]="set.name" class="h-3 w-3 object-contain" loading="lazy" />
+                    }
+                    @if (set.logo) {
+                      <img [src]="set.logo + '.webp'" [alt]="set.name" class="h-3 object-contain" loading="lazy" />
+                    }
+                  </div>
+                }
               </div>
             }
           </div>
@@ -95,6 +106,7 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
 export class DashboardComponent implements OnInit {
   private readonly collectionService = inject(CollectionService);
   private readonly router = inject(Router);
+  readonly setCache = inject(SetCacheService);
   readonly stats = this.collectionService.stats;
 
   readonly modalVisible = signal(false);
@@ -104,6 +116,7 @@ export class DashboardComponent implements OnInit {
 
   ngOnInit(): void {
     this.collectionService.loadStats();
+    this.setCache.ensureLoaded();
   }
 
   goToCard(id: string): void {

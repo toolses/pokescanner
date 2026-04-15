@@ -12,6 +12,8 @@ export interface WishlistCard {
   localId: string | null;
   rarity: string | null;
   cardImageUrl: string | null;
+  setLogo: string | null;
+  setSymbol: string | null;
   priority: number;
   notes: string | null;
   addedAt: string;
@@ -25,6 +27,8 @@ export interface AddWishlistCardRequest {
   localId?: string;
   rarity?: string;
   cardImageUrl?: string;
+  setLogo?: string;
+  setSymbol?: string;
   priority?: number;
   notes?: string;
 }
@@ -64,5 +68,14 @@ export class WishlistService {
       this.http.delete(`${this.baseUrl}/wishlist/${id}`)
     );
     this._cards.update(cards => cards.filter(c => c.id !== id));
+  }
+
+  isWishlisted(tcgdexCardId: string): boolean {
+    return this._cards().some(c => c.tcgdexCardId === tcgdexCardId);
+  }
+
+  async removeByTcgdexId(tcgdexCardId: string): Promise<void> {
+    const card = this._cards().find(c => c.tcgdexCardId === tcgdexCardId);
+    if (card) await this.deleteCard(card.id);
   }
 }
