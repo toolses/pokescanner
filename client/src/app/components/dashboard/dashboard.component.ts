@@ -10,26 +10,26 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
   imports: [RouterLink, CardModalComponent],
   template: `
     <div class="max-w-lg mx-auto p-4 space-y-6">
-      <div class="text-center pt-4 pb-2">
+      <div class="text-center pb-2">
         <h1 class="text-3xl font-display font-bold text-dex-gold">PokéScanner</h1>
         <p class="text-dex-text-muted text-sm mt-1">Your Pokémon card collection manager</p>
       </div>
 
       <!-- Stats Grid -->
       <div class="grid grid-cols-2 gap-3">
-        <div class="bg-dex-surface rounded-xl p-4 border border-dex-surface-light">
+        <div class="bg-dex-surface rounded-xl px-4 py-2.5 border border-dex-surface-light">
           <p class="text-2xl font-bold text-dex-text">{{ stats()?.totalCards ?? 0 }}</p>
           <p class="text-xs text-dex-text-muted">Total Cards</p>
         </div>
-        <div class="bg-dex-surface rounded-xl p-4 border border-dex-surface-light">
+        <div class="bg-dex-surface rounded-xl px-4 py-2.5 border border-dex-surface-light">
           <p class="text-2xl font-bold text-dex-text">{{ stats()?.uniqueCards ?? 0 }}</p>
           <p class="text-xs text-dex-text-muted">Unique Cards</p>
         </div>
-        <div class="bg-dex-surface rounded-xl p-4 border border-dex-surface-light">
+        <div class="bg-dex-surface rounded-xl px-4 py-2.5 border border-dex-surface-light">
           <p class="text-2xl font-bold text-dex-text">{{ stats()?.totalSets ?? 0 }}</p>
           <p class="text-xs text-dex-text-muted">Sets Collected</p>
         </div>
-        <div class="bg-dex-surface rounded-xl p-4 border border-dex-surface-light">
+        <div class="bg-dex-surface rounded-xl px-4 py-2.5 border border-dex-surface-light">
           <p class="text-2xl font-bold text-dex-gold">€{{ (stats()?.estimatedValue ?? 0).toFixed(2) }}</p>
           <p class="text-xs text-dex-text-muted">Est. Value (NM)</p>
         </div>

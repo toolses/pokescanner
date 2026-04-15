@@ -65,5 +65,5 @@
 
 /* ── Safe area padding for PWA ─────────────────────────────── */
 .safe-bottom {
-  padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
