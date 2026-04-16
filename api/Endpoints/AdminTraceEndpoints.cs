@@ -80,17 +80,19 @@ public static class AdminTraceEndpoints
     }
 }
 
-public record AdminTraceSummary(
-    Guid CorrelationId,
-    DateTime StartedAt,
-    DateTime EndedAt,
-    int TotalCalls,
-    int TotalDurationMs,
-    int TotalTokens,
-    int ErrorCount,
-    string[] Providers,
-    string[] Endpoints,
-    string[]? Models);
+public class AdminTraceSummary
+{
+    public Guid CorrelationId { get; set; }
+    public DateTime StartedAt { get; set; }
+    public DateTime EndedAt { get; set; }
+    public int TotalCalls { get; set; }
+    public int TotalDurationMs { get; set; }
+    public int TotalTokens { get; set; }
+    public int ErrorCount { get; set; }
+    public string[] Providers { get; set; } = [];
+    public string[] Endpoints { get; set; } = [];
+    public string[]? Models { get; set; }
+}
 
 public record AdminTraceEntry(
     Guid Id,
