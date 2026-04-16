@@ -120,7 +120,7 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
     :host ::ng-deep .prose-chat h3,
     :host ::ng-deep .prose-chat h4 {
       font-weight: 700;
-      color: #f0c040;
+      color: var(--color-dex-gold);
       margin-top: 1em;
       margin-bottom: 0.4em;
       line-height: 1.3;
@@ -185,7 +185,7 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
     }
 
     :host ::ng-deep .prose-chat blockquote {
-      border-left: 3px solid #f0c040;
+      border-left: 3px solid var(--color-dex-gold);
       padding-left: 0.75em;
       margin: 0.6em 0;
       opacity: 0.8;
@@ -199,7 +199,7 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
     }
 
     :host ::ng-deep .prose-chat a {
-      color: #e94560;
+      color: var(--color-dex-accent);
       text-decoration: underline;
     }
 

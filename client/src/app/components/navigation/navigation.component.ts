@@ -7,13 +7,13 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
   imports: [RouterLink, RouterLinkActive],
   template: `
     <nav class="fixed bottom-0 left-0 right-0 bg-dex-surface border-t border-dex-surface-light safe-bottom z-50">
-      <div class="flex justify-around items-center h-12 max-w-lg mx-auto">
+      <div class="flex justify-around items-center h-16 max-w-lg mx-auto">
         @for (item of navItems; track item.path) {
           <a [routerLink]="item.path"
              routerLinkActive="text-dex-accent"
              [routerLinkActiveOptions]="{ exact: item.exact }"
-             class="flex flex-col items-center gap-0 text-dex-text-muted hover:text-dex-text transition-colors px-3 py-0.5">
-            <span class="text-lg">{{ item.icon }}</span>
+             class="flex flex-col items-center gap-0.5 text-dex-text-muted hover:text-dex-text transition-colors px-3 py-1">
+            <span class="text-xl">{{ item.icon }}</span>
             <span class="text-[10px] font-medium">{{ item.label }}</span>
           </a>
         }

@@ -110,6 +110,8 @@ public sealed class CardMatchingService
     /// </summary>
     private static string? MapWellKnownSetCode(string code) => code switch
     {
+        // Mastery era
+        "PFL" => "me02",
         // Scarlet & Violet era
         "MEW" => "sv03.5",
         "SVI" => "sv01",

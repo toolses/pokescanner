@@ -54,7 +54,7 @@ public sealed class TcgDexService
         string name, string localId, CancellationToken ct)
     {
         var client = _httpClientFactory.CreateClient("tcgdex");
-        var url = $"{_baseUrl}/cards?name={Uri.EscapeDataString(name)}&localId=eq:{Uri.EscapeDataString(localId)}";
+        var url = $"{_baseUrl}/cards?name={Uri.EscapeDataString(name)}&localId={Uri.EscapeDataString(localId)}";
 
         try
         {

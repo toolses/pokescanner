@@ -11,7 +11,7 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
   template: `
     <div class="max-w-lg mx-auto p-4 space-y-6">
       <div class="text-center pb-2">
-        <h1 class="text-3xl font-display font-bold text-dex-gold">PokéScanner</h1>
+        <h1 class="text-3xl font-display font-bold text-dex-gold">P<svg class="pokeball-o" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="48" fill="#CC0000" stroke="currentColor" stroke-width="4"/><rect x="0" y="46" width="100" height="8" fill="currentColor"/><circle cx="50" cy="50" r="48" fill="transparent" stroke="currentColor" stroke-width="4"/><path d="M0,50 Q0,100 50,100 Q100,100 100,50" fill="white" stroke="currentColor" stroke-width="4"/><circle cx="50" cy="50" r="16" fill="white" stroke="currentColor" stroke-width="4"/><circle cx="50" cy="50" r="8" fill="currentColor"/></svg>kéScanner</h1>
         <p class="text-dex-text-muted text-sm mt-1">Your Pokémon card collection manager</p>
       </div>
 
@@ -67,8 +67,8 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
       @if (stats()?.recentAdditions?.length) {
         <div>
           <h2 class="text-lg font-bold text-dex-text mb-3">Recently Added</h2>
-          <div class="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 custom-scrollbar">
-            @for (card of stats()!.recentAdditions; track card.id) {
+          <div class="flex justify-center gap-3 pb-2">
+            @for (card of stats()!.recentAdditions.slice(0, 3); track card.id) {
               <div (click)="goToCard(card.id)"
                    class="flex-shrink-0 w-28 bg-dex-surface rounded-xl p-2 border border-dex-surface-light cardhover cursor-pointer">
                 @if (card.cardImageUrl) {
@@ -102,6 +102,15 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
       [details]="modalDetails()"
       (close)="modalVisible.set(false)" />
   `,
+  styles: [`
+    .pokeball-o {
+      display: inline-block;
+      width: 0.75em;
+      height: 0.75em;
+      vertical-align: -0.05em;
+      margin: 0 -0.03em;
+    }
+  `],
 })
 export class DashboardComponent implements OnInit {
   private readonly collectionService = inject(CollectionService);

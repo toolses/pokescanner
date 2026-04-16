@@ -152,7 +152,7 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
                   <span class="text-dex-text-muted text-xs">Weakness</span>
                   <div class="flex gap-1 mt-1">
                     @for (w of card()!.weaknesses!; track w.type) {
-                      <span class="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full">{{ w.type }} {{ w.value }}</span>
+                      <span class="text-xs bg-dex-error/20 text-dex-error px-2 py-0.5 rounded-full">{{ w.type }} {{ w.value }}</span>
                     }
                   </div>
                 </div>
@@ -210,7 +210,7 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
           {{ isWishlisted() ? '⭐' : '☆' }} Wishlist
         </button>
       } @else if (error()) {
-        <div class="text-center py-12 text-red-400 text-sm">Card not found.</div>
+        <div class="text-center py-12 text-dex-error text-sm">Card not found.</div>
       } @else {
         <div class="flex justify-center py-12">
           <div class="w-10 h-10 border-4 border-dex-accent border-t-transparent rounded-full animate-spin"></div>

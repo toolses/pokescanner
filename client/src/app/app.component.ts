@@ -18,7 +18,7 @@ import { NotificationService } from './services/notification.service';
       <div class="fixed top-4 right-4 left-4 z-[100] flex flex-col gap-2 max-w-lg mx-auto">
         @for (n of notifications.toasts(); track n.id) {
           <div class="rounded-xl px-4 py-3 text-sm font-medium shadow-lg animate-slide-in"
-               [class]="n.type === 'error' ? 'bg-red-500 text-white' : 'bg-dex-success text-dex-bg'">
+               [class]="n.type === 'error' ? 'bg-dex-error text-dex-text' : 'bg-dex-success text-dex-bg'">
             {{ n.message }}
           </div>
         }

@@ -74,7 +74,7 @@ import { NotificationService } from '../../services/notification.service';
                 {{ priorityLabel(card.priority) }}
               </span>
               <button (click)="removeCard(card.id); $event.stopPropagation()"
-                      class="text-red-400 hover:text-red-300 text-sm px-2 py-1 flex-shrink-0">
+                      class="text-dex-error hover:text-dex-accent-light text-sm px-2 py-1 flex-shrink-0">
                 ✕
               </button>
             </div>
@@ -130,7 +130,7 @@ export class WishlistComponent implements OnInit {
 
   priorityClass(p: number): string {
     return p >= 3
-      ? 'bg-red-500/20 text-red-400'
+      ? 'bg-dex-error/20 text-dex-error'
       : p === 2
         ? 'bg-dex-gold/20 text-dex-gold'
         : 'bg-dex-surface-light text-dex-text-muted';

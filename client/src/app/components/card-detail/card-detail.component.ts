@@ -138,7 +138,7 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
                   <span class="text-dex-text-muted text-xs">Weakness</span>
                   <div class="flex gap-1 mt-1">
                     @for (w of tcgCard()!.weaknesses!; track w.type) {
-                      <span class="text-xs bg-red-500/20 text-red-400 px-2 py-0.5 rounded-full">{{ w.type }} {{ w.value }}</span>
+                      <span class="text-xs bg-dex-error/20 text-dex-error px-2 py-0.5 rounded-full">{{ w.type }} {{ w.value }}</span>
                     }
                   </div>
                 </div>
@@ -184,7 +184,7 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
             {{ isWishlisted() ? '⭐' : '☆' }} Wishlist
           </button>
           <button (click)="deleteCard()"
-                  class="bg-dex-surface border border-red-500 text-red-500 font-semibold py-2.5 px-5 rounded-xl hover:bg-red-500/10 transition-colors">
+                  class="bg-dex-surface border border-dex-error text-dex-error font-semibold py-2.5 px-5 rounded-xl hover:bg-dex-error/10 transition-colors">
             🗑️
           </button>
         </div>

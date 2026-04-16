@@ -3,17 +3,17 @@
 
 /* ── PokéScanner Theme ─────────────────────────────────────── */
 @theme {
-  --color-dex-bg: #1a1a2e;
-  --color-dex-surface: #16213e;
-  --color-dex-surface-light: #0f3460;
-  --color-dex-accent: #e94560;
-  --color-dex-accent-light: #ff6b6b;
-  --color-dex-accent-dark: #c73e54;
-  --color-dex-gold: #ffd700;
-  --color-dex-gold-light: #ffe44d;
-  --color-dex-text: #eaeaea;
-  --color-dex-text-muted: #a0a0b0;
-  --color-dex-text-dark: #6b7280;
+  --color-dex-bg: #1a1f5e;
+  --color-dex-surface: #252a72;
+  --color-dex-surface-light: #3B4CCA;
+  --color-dex-accent: #FF0000;
+  --color-dex-accent-light: #FF4444;
+  --color-dex-accent-dark: #CC0000;
+  --color-dex-gold: #FFDE00;
+  --color-dex-gold-light: #FFE844;
+  --color-dex-text: #f5f5ff;
+  --color-dex-text-muted: #b0b4e0;
+  --color-dex-text-dark: #7a80b8;
   --color-dex-success: #4ade80;
   --color-dex-warning: #fbbf24;
   --color-dex-error: #f87171;
@@ -47,7 +47,7 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   &:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(233, 69, 96, 0.15);
+    box-shadow: 0 8px 25px rgba(255, 0, 0, 0.15);
   }
 }
 
@@ -65,5 +65,5 @@
 
 /* ── Safe area padding for PWA ─────────────────────────────── */
 .safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+  padding-bottom: max(env(safe-area-inset-bottom), 1rem);
 }
