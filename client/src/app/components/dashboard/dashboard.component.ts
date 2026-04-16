@@ -37,10 +37,6 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
 
       <!-- Quick Actions -->
       <div class="space-y-3">
-        <a routerLink="/scan"
-           class="block bg-dex-accent hover:bg-dex-accent-dark text-white font-bold text-center py-4 rounded-xl transition-colors text-lg">
-          📷 Scan a Card
-        </a>
         <div class="grid grid-cols-2 gap-3">
           <a routerLink="/collection"
              class="block bg-dex-surface hover:bg-dex-surface-light text-dex-text font-semibold text-center py-3 rounded-xl transition-colors border border-dex-surface-light">

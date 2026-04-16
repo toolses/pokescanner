@@ -63,7 +63,16 @@
   border-radius: 3px;
 }
 
-/* ── Safe area padding for PWA ─────────────────────────────── */
-.safe-bottom {
-  padding-bottom: max(env(safe-area-inset-bottom), 1rem);
+/* ── Prevent iOS Safari zoom on input focus ────────────────── */
+input, textarea, select {
+  font-size: max(16px, 1em);
+}
+
+/* ── Pokéball scan button pulse ────────────────────────────── */
+@keyframes pokeball-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.08); }
+}
+.pokeball-pulse {
+  animation: pokeball-pulse 2s ease-in-out infinite;
 }

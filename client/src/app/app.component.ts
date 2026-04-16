@@ -8,9 +8,12 @@ import { NotificationService } from './services/notification.service';
   standalone: true,
   imports: [RouterOutlet, NavigationComponent],
   template: `
-    <main class="min-h-screen pb-20">
-      <router-outlet />
-    </main>
+    <div class="h-dvh overflow-hidden bg-dex-bg flex flex-col">
+      <div class="flex-1 overflow-y-auto overscroll-y-none">
+        <router-outlet />
+        <div class="shrink-0" aria-hidden="true" style="height: calc(4rem + env(safe-area-inset-bottom))"></div>
+      </div>
+    </div>
     <app-navigation />
 
     <!-- Toast Notifications -->

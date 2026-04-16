@@ -16,10 +16,10 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
 
       @if (card()) {
         <!-- Card Image -->
-        <div class="bg-dex-surface rounded-xl overflow-hidden border border-dex-surface-light">
+        <div class="flex justify-center">
           @if (card()!.cardImageUrl) {
             <img [src]="card()!.cardImageUrl" [alt]="card()!.cardName"
-                 class="w-full max-h-96 object-contain bg-dex-bg cursor-pointer"
+                 class="max-h-[420px] object-contain rounded-xl border border-dex-surface-light cursor-pointer"
                  (click)="openModal()" />
           }
         </div>
