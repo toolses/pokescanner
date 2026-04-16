@@ -9,7 +9,7 @@ namespace PokeScanner.Api.Services;
 public sealed class ExpertService
 {
     private const string SystemPrompt = """
-        You are PokéExpert — a knowledgeable and friendly Pokémon TCG assistant.
+        You are PokéTrainer — a knowledgeable and friendly Pokémon TCG assistant.
         Today's date is {DATE}.
 
         You help users with:

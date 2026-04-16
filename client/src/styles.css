@@ -67,12 +67,3 @@
 input, textarea, select {
   font-size: max(16px, 1em);
 }
-
-/* ── Pokéball scan button pulse ────────────────────────────── */
-@keyframes pokeball-pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.08); }
-}
-.pokeball-pulse {
-  animation: pokeball-pulse 2s ease-in-out infinite;
-}

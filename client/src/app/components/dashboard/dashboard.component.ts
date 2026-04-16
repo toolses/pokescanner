@@ -53,8 +53,17 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
             ⭐ Wishlist
           </a>
           <a routerLink="/expert"
-             class="block bg-dex-surface hover:bg-dex-surface-light text-dex-text font-semibold text-center py-3 rounded-xl transition-colors border border-dex-surface-light">
-            🧠 Ask Expert
+             class="flex items-center justify-center gap-2 bg-dex-surface hover:bg-dex-surface-light text-dex-text font-semibold text-center py-3 rounded-xl transition-colors border border-dex-surface-light">
+            <svg class="w-5 h-5 inline-block" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M50 5C26.15 5 5.9 23.3 5.02 47H37.1a13 13 0 0 1 25.8 0h32.08C94.1 23.3 73.85 5 50 5Z" fill="#1a1a2e"/>
+              <path d="M50 12c-18.5 0-34 10.8-38.5 26h7.2C22.8 26.5 35.2 18 50 18s27.2 8.5 31.3 20h7.2C84 22.8 68.5 12 50 12Z" fill="#FFDE00"/>
+              <path d="M50 95c23.85 0 44.1-18.3 44.98-42H62.9a13 13 0 0 1-25.8 0H5.02C5.9 76.7 26.15 95 50 95Z" fill="#f5f5ff"/>
+              <rect x="5" y="47" width="90" height="6" rx="1" fill="#1a1a2e"/>
+              <circle cx="50" cy="50" r="15" fill="#1a1a2e"/>
+              <circle cx="50" cy="50" r="11" fill="#f5f5ff"/>
+              <circle cx="50" cy="50" r="4" fill="#1a1a2e"/>
+            </svg>
+            Ask Trainer
           </a>
         </div>
       </div>

@@ -26,7 +26,7 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
 
         <!-- Center: Pokéball Scan -->
         <a routerLink="/scan" routerLinkActive="scan-active"
-           class="flex flex-col items-center -mt-5 pokeball-pulse">
+           class="flex flex-col items-center relative -top-4">
           <svg class="w-14 h-14 drop-shadow-lg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
             <!-- Red top half -->
             <path d="M50 5C26.15 5 5.9 23.3 5.02 47H37.1a13 13 0 0 1 25.8 0h32.08C94.1 23.3 73.85 5 50 5Z" fill="#FF0000"/>
@@ -38,9 +38,10 @@ import { RouterLink, RouterLinkActive } from '@angular/router';
             <circle cx="50" cy="50" r="15" fill="#1a1a2e"/>
             <!-- Center circle inner -->
             <circle cx="50" cy="50" r="11" fill="#f5f5ff"/>
-            <!-- SCAN text -->
-            <text x="50" y="53.5" text-anchor="middle" fill="#1a1a2e" font-size="9" font-weight="bold" font-family="sans-serif">SCAN</text>
+            <!-- Center dot -->
+            <circle cx="50" cy="50" r="4" fill="#1a1a2e"/>
           </svg>
+          <span class="text-[10px] font-medium text-dex-text-muted">Scan</span>
         </a>
 
         <!-- Right: Search -->

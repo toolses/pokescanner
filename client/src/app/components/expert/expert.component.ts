@@ -13,7 +13,7 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
   template: `
     <div class="max-w-lg mx-auto p-4 flex flex-col h-[calc(100dvh-5rem)]">
       <div class="flex items-center justify-between mb-4">
-        <h1 class="text-2xl font-display font-bold text-dex-text">PokéExpert</h1>
+        <h1 class="text-2xl font-display font-bold text-dex-text">PokéTrainer</h1>
         <button (click)="newSession()"
                 class="text-xs bg-dex-surface-light text-dex-text-muted px-3 py-1.5 rounded-lg hover:text-dex-text">
           New chat
@@ -24,8 +24,16 @@ import { CardModalComponent, CardModalDetails } from '../card-modal/card-modal.c
       <div #messagesContainer class="flex-1 overflow-y-auto space-y-3 mb-4 custom-scrollbar">
         @if (messages().length === 0 && !loading()) {
           <div class="text-center py-12 text-dex-text-muted">
-            <span class="text-5xl block mb-3">🧠</span>
-            <p class="font-medium mb-2">Ask the PokéExpert!</p>
+            <svg class="w-16 h-16 mx-auto mb-3" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M50 5C26.15 5 5.9 23.3 5.02 47H37.1a13 13 0 0 1 25.8 0h32.08C94.1 23.3 73.85 5 50 5Z" fill="#1a1a2e"/>
+              <path d="M50 12c-18.5 0-34 10.8-38.5 26h7.2C22.8 26.5 35.2 18 50 18s27.2 8.5 31.3 20h7.2C84 22.8 68.5 12 50 12Z" fill="#FFDE00"/>
+              <path d="M50 95c23.85 0 44.1-18.3 44.98-42H62.9a13 13 0 0 1-25.8 0H5.02C5.9 76.7 26.15 95 50 95Z" fill="#f5f5ff"/>
+              <rect x="5" y="47" width="90" height="6" rx="1" fill="#1a1a2e"/>
+              <circle cx="50" cy="50" r="15" fill="#1a1a2e"/>
+              <circle cx="50" cy="50" r="11" fill="#f5f5ff"/>
+              <circle cx="50" cy="50" r="4" fill="#1a1a2e"/>
+            </svg>
+            <p class="font-medium mb-2">Ask the PokéTrainer!</p>
             <p class="text-xs">Questions about cards, decks, strategies, sets, and more.</p>
             <div class="mt-4 space-y-2">
               @for (suggestion of suggestions; track suggestion) {
