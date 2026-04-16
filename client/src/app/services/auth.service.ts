@@ -29,6 +29,9 @@ export class AuthService {
       this._session.set(session);
       this._user.set(session?.user ?? null);
       this._loading.set(false);
+      if (session) {
+        this.checkAdmin();
+      }
     });
   }
 
@@ -97,5 +100,13 @@ export class AuthService {
     this._session.set(data.session);
     this._user.set(data.session?.user ?? null);
     this._loading.set(false);
+    if (data.session) {
+      this.checkAdmin();
+    }
+  }
+
+  private async checkAdmin(): Promise<void> {
+    const { AdminService } = await import('./admin.service');
+    this.injector.get(AdminService).checkAdminStatus();
   }
 }

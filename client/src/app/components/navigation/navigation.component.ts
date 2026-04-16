@@ -1,6 +1,5 @@
-﻿import { Component, inject } from '@angular/core';
+﻿import { Component } from '@angular/core';
 import { RouterLink, RouterLinkActive } from '@angular/router';
-import { AdminService } from '../../services/admin.service';
 
 @Component({
   selector: 'app-navigation',
@@ -74,15 +73,6 @@ import { AdminService } from '../../services/admin.service';
           <span class="text-[10px] font-medium">Trainer</span>
         </a>
 
-        <!-- Admin (only for admins) -->
-        @if (admin.isAdmin()) {
-          <a routerLink="/admin" routerLinkActive="text-dex-gold"
-             class="flex flex-col items-center gap-0.5 text-dex-text-muted hover:text-dex-text transition-colors px-3 py-1">
-            <span class="text-xl">⚙️</span>
-            <span class="text-[10px] font-medium">Admin</span>
-          </a>
-        }
-
       </div>
     </nav>
   `,
@@ -90,6 +80,4 @@ import { AdminService } from '../../services/admin.service';
     .scan-active svg { filter: drop-shadow(0 0 8px rgba(255, 0, 0, 0.6)); }
   `],
 })
-export class NavigationComponent {
-  protected readonly admin = inject(AdminService);
-}
+export class NavigationComponent {}
