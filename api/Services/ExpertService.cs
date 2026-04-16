@@ -51,12 +51,12 @@ public sealed class ExpertService
     }
 
     public async Task<(string? Answer, string? ModelUsed, Guid? SessionId)> AskAsync(
-        string question, Guid? sessionId, CancellationToken ct)
+        Guid userId, string question, Guid? sessionId, CancellationToken ct)
     {
         var correlationId = Guid.NewGuid();
 
         // Build collection context
-        var collectionContext = await BuildCollectionContextAsync(ct);
+        var collectionContext = await BuildCollectionContextAsync(userId, ct);
 
         var systemPrompt = SystemPrompt
             .Replace("{DATE}", DateTime.UtcNow.ToString("yyyy-MM-dd"))
@@ -85,41 +85,56 @@ public sealed class ExpertService
         }
 
         // Create or update session
-        var sid = sessionId ?? await CreateSessionAsync(question, ct);
+        var sid = sessionId ?? await CreateSessionAsync(userId, question, ct);
         await SaveMessageAsync(sid, "user", question, null, ct);
         await SaveMessageAsync(sid, "assistant", result.Answer!, result.UsedModel, ct);
 
         return (result.Answer, result.UsedModel, sid);
     }
 
-    public async Task<ExpertSession[]> GetSessionsAsync(CancellationToken ct)
+    public async Task<ExpertSession[]> GetSessionsAsync(Guid userId, CancellationToken ct)
     {
         await using var conn = await _dataSource.OpenConnectionAsync(ct);
         var sessions = await conn.QueryAsync<ExpertSession>(
-            "SELECT * FROM expert_sessions ORDER BY updated_at DESC LIMIT 20");
+            "SELECT * FROM expert_sessions WHERE user_id = @UserId ORDER BY updated_at DESC LIMIT 20",
+            new { UserId = userId });
         return sessions.ToArray();
     }
 
-    public async Task<ExpertMessage[]> GetSessionMessagesAsync(Guid sessionId, CancellationToken ct)
+    public async Task<ExpertMessage[]> GetSessionMessagesAsync(Guid sessionId, Guid userId, CancellationToken ct)
     {
         await using var conn = await _dataSource.OpenConnectionAsync(ct);
         var messages = await conn.QueryAsync<ExpertMessage>(
-            "SELECT * FROM expert_messages WHERE session_id = @SessionId ORDER BY created_at",
-            new { SessionId = sessionId });
+            """
+            SELECT em.* FROM expert_messages em
+            JOIN expert_sessions es ON es.id = em.session_id
+            WHERE em.session_id = @SessionId AND es.user_id = @UserId
+            ORDER BY em.created_at
+            """,
+            new { SessionId = sessionId, UserId = userId });
         return messages.ToArray();
     }
 
-    private async Task<string> BuildCollectionContextAsync(CancellationToken ct)
+    private async Task<string> BuildCollectionContextAsync(Guid userId, CancellationToken ct)
     {
         try
         {
             await using var conn = await _dataSource.OpenConnectionAsync(ct);
             var total = await conn.QuerySingleAsync<int>(
-                "SELECT COALESCE(SUM(quantity), 0) FROM collection_cards");
+                "SELECT COALESCE(SUM(quantity), 0) FROM user_collection WHERE user_id = @UserId",
+                new { UserId = userId });
             var unique = await conn.QuerySingleAsync<int>(
-                "SELECT COUNT(DISTINCT tcgdex_card_id) FROM collection_cards");
+                "SELECT COUNT(DISTINCT tcgdex_card_id) FROM user_collection WHERE user_id = @UserId",
+                new { UserId = userId });
             var allCards = await conn.QueryAsync<dynamic>(
-                "SELECT card_name, set_name, rarity, quantity, condition FROM collection_cards ORDER BY card_name");
+                """
+                SELECT c.card_name, c.set_name, c.rarity, uc.quantity, uc.condition
+                FROM user_collection uc
+                JOIN cards c ON c.tcgdex_card_id = uc.tcgdex_card_id
+                WHERE uc.user_id = @UserId
+                ORDER BY c.card_name
+                """,
+                new { UserId = userId });
 
             var cardLines = allCards.Select(r =>
                 $"- {r.card_name} ({r.set_name}, {r.rarity}, {r.condition}, qty: {r.quantity})");
@@ -146,13 +161,13 @@ public sealed class ExpertService
         return string.Join("\n", messages.Reverse().Select(m => $"{m.Role}: {m.Content}"));
     }
 
-    private async Task<Guid> CreateSessionAsync(string question, CancellationToken ct)
+    private async Task<Guid> CreateSessionAsync(Guid userId, string question, CancellationToken ct)
     {
         await using var conn = await _dataSource.OpenConnectionAsync(ct);
         var title = question.Length > 60 ? question[..60] + "…" : question;
         return await conn.QuerySingleAsync<Guid>(
-            "INSERT INTO expert_sessions (title) VALUES (@Title) RETURNING id",
-            new { Title = title });
+            "INSERT INTO expert_sessions (title, user_id) VALUES (@Title, @UserId) RETURNING id",
+            new { Title = title, UserId = userId });
     }
 
     private async Task SaveMessageAsync(Guid sessionId, string role, string content, string? modelUsed, CancellationToken ct)

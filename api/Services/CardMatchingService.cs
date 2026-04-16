@@ -44,8 +44,27 @@ public sealed class CardMatchingService
             var exact = await _tcgDex.GetSetCardAsync(resolvedSetId, scan.LocalId, ct);
             if (exact is not null)
             {
-                _logger.LogInformation("CardMatchingService: exact match found — {Id}", exact.Id);
                 var altCandidates = await SearchWithFallbackAsync(scan, ct);
+
+                // Verify the name matches to avoid false positives from OCR misreading the localId
+                if (!string.IsNullOrWhiteSpace(scan.Name) &&
+                    !exact.Name.Contains(scan.Name, StringComparison.OrdinalIgnoreCase) &&
+                    !scan.Name.Contains(exact.Name, StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogInformation(
+                        "CardMatchingService: exact lookup {Id} name '{CardName}' doesn't match scan name '{ScanName}' — demoting to candidate",
+                        exact.Id, exact.Name, scan.Name);
+                    var briefFromExact = new TcgDexCardBrief
+                    {
+                        Id = exact.Id,
+                        LocalId = exact.LocalId,
+                        Name = exact.Name,
+                        Image = exact.Image
+                    };
+                    return (null, altCandidates.Prepend(briefFromExact).ToArray());
+                }
+
+                _logger.LogInformation("CardMatchingService: exact match found — {Id}", exact.Id);
                 return (exact, altCandidates);
             }
 

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Http.HttpResults;
 using PokeScanner.Api.Models;
 using PokeScanner.Api.Services;
@@ -8,7 +9,9 @@ public static class ExpertEndpoints
 {
     public static IEndpointRouteBuilder MapExpertEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/expert").WithTags("Expert");
+        var group = app.MapGroup("/api/expert")
+            .WithTags("Expert")
+            .RequireAuthorization();
 
         group.MapPost("/ask", AskExpert);
         group.MapGet("/sessions", GetSessions);
@@ -17,14 +20,18 @@ public static class ExpertEndpoints
         return app;
     }
 
+    private static Guid GetUserId(ClaimsPrincipal user)
+        => Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
     private static async Task<Results<Ok<object>, ProblemHttpResult>> AskExpert(
-        AskExpertRequest req, ExpertService service, TcgDexService tcgDex,
+        AskExpertRequest req, ClaimsPrincipal user, ExpertService service, TcgDexService tcgDex,
         CollectionService collection, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(req.Question))
             return TypedResults.Problem("Question is required", statusCode: 400);
 
-        var (answer, modelUsed, sessionId) = await service.AskAsync(req.Question, req.SessionId, ct);
+        var userId = GetUserId(user);
+        var (answer, modelUsed, sessionId) = await service.AskAsync(userId, req.Question, req.SessionId, ct);
 
         if (answer is null)
             return TypedResults.Problem("All AI providers failed. Please try again later.", statusCode: 502);
@@ -35,7 +42,7 @@ public static class ExpertEndpoints
         object[]? cardResults = null;
 
         // Load collection once so we can prefer the user's own copies
-        var collectionCards = (await collection.GetAllAsync(ct)).ToList();
+        var collectionCards = (await collection.GetAllAsync(userId, ct)).ToList();
 
         if (cardNames.Length > 0)
         {
@@ -163,16 +170,16 @@ public static class ExpertEndpoints
     }
 
     private static async Task<Ok<ExpertSession[]>> GetSessions(
-        ExpertService service, CancellationToken ct)
+        ClaimsPrincipal user, ExpertService service, CancellationToken ct)
     {
-        var sessions = await service.GetSessionsAsync(ct);
+        var sessions = await service.GetSessionsAsync(GetUserId(user), ct);
         return TypedResults.Ok(sessions);
     }
 
     private static async Task<Ok<ExpertMessage[]>> GetSessionMessages(
-        Guid id, ExpertService service, CancellationToken ct)
+        Guid id, ClaimsPrincipal user, ExpertService service, CancellationToken ct)
     {
-        var messages = await service.GetSessionMessagesAsync(id, ct);
+        var messages = await service.GetSessionMessagesAsync(id, GetUserId(user), ct);
         return TypedResults.Ok(messages);
     }
 }

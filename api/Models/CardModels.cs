@@ -1,9 +1,33 @@
 namespace PokeScanner.Api.Models;
 
-// ── Collection card stored in the database ─────────────────────────────────
+// ── Global card reference (cards table) ────────────────────────────────────
+public record Card
+{
+    public string TcgdexCardId { get; init; } = string.Empty;
+    public string CardName { get; init; } = string.Empty;
+    public string? SetId { get; init; }
+    public string? SetName { get; init; }
+    public string? LocalId { get; init; }
+    public string? Rarity { get; init; }
+    public string? CardImageUrl { get; init; }
+    public string? Category { get; init; }
+    public int? Hp { get; init; }
+    public string[]? Types { get; init; }
+    public string? Illustrator { get; init; }
+    public string? Stage { get; init; }
+    public string? EvolveFrom { get; init; }
+    public string? Description { get; init; }
+    public string? SetLogo { get; init; }
+    public string? SetSymbol { get; init; }
+    public DateTimeOffset CreatedAt { get; init; }
+}
+
+// ── Collection card (JOIN of user_collection + cards) ──────────────────────
+// Returned by the API — same shape as before so frontend is unaffected.
 public record CollectionCard
 {
     public Guid Id { get; init; }
+    public Guid UserId { get; init; }
     public string TcgdexCardId { get; init; } = string.Empty;
     public string CardName { get; init; } = string.Empty;
     public string? SetId { get; init; }
@@ -26,10 +50,11 @@ public record CollectionCard
     public DateTimeOffset AddedAt { get; init; }
 }
 
-// ── Wishlist card ──────────────────────────────────────────────────────────
+// ── Wishlist card (JOIN of user_wishlist + cards) ──────────────────────────
 public record WishlistCard
 {
     public Guid Id { get; init; }
+    public Guid UserId { get; init; }
     public string TcgdexCardId { get; init; } = string.Empty;
     public string CardName { get; init; } = string.Empty;
     public string? SetId { get; init; }
@@ -251,6 +276,7 @@ public record CollectionStats
 public record ExpertSession
 {
     public Guid Id { get; init; }
+    public Guid? UserId { get; init; }
     public string? Title { get; init; }
     public DateTimeOffset CreatedAt { get; init; }
     public DateTimeOffset UpdatedAt { get; init; }

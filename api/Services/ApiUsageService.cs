@@ -15,7 +15,8 @@ public interface IApiUsageService
         string? responseBody    = null,
         Guid?   correlationId   = null,
         string? usedModel       = null,
-        int?    totalTokensUsed = null);
+        int?    totalTokensUsed = null,
+        Guid?   userId          = null);
 }
 
 public sealed class ApiUsageService : IApiUsageService
@@ -35,7 +36,8 @@ public sealed class ApiUsageService : IApiUsageService
         string provider, string endpoint, int? statusCode, int responseTimeMs,
         CancellationToken ct,
         string? requestBody = null, string? responseBody = null,
-        Guid? correlationId = null, string? usedModel = null, int? totalTokensUsed = null)
+        Guid? correlationId = null, string? usedModel = null, int? totalTokensUsed = null,
+        Guid? userId = null)
     {
         try
         {
@@ -45,11 +47,11 @@ public sealed class ApiUsageService : IApiUsageService
                 INSERT INTO api_usage_logs
                     (provider, endpoint, status_code, response_time_ms,
                      request_body, response_body, correlation_id,
-                     used_model, total_tokens_used)
+                     used_model, total_tokens_used, user_id)
                 VALUES
                     (@Provider, @Endpoint, @StatusCode, @ResponseTimeMs,
                      @RequestBody, @ResponseBody, @CorrelationId,
-                     @UsedModel, @TotalTokensUsed)
+                     @UsedModel, @TotalTokensUsed, @UserId)
                 """,
                 new
                 {
@@ -62,6 +64,7 @@ public sealed class ApiUsageService : IApiUsageService
                     CorrelationId   = correlationId,
                     UsedModel       = usedModel,
                     TotalTokensUsed = totalTokensUsed,
+                    UserId          = userId,
                 });
         }
         catch (Exception ex)

@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Http.HttpResults;
 using PokeScanner.Api.Models;
 using PokeScanner.Api.Services;
@@ -10,15 +11,17 @@ public static class StatsEndpoints
     {
         app.MapGet("/api/stats", GetStats)
             .WithName("GetCollectionStats")
-            .WithTags("Stats");
+            .WithTags("Stats")
+            .RequireAuthorization();
 
         return app;
     }
 
     private static async Task<Ok<CollectionStats>> GetStats(
-        CollectionService service, CancellationToken ct)
+        ClaimsPrincipal user, CollectionService service, CancellationToken ct)
     {
-        var stats = await service.GetStatsAsync(ct);
+        var userId = Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+        var stats = await service.GetStatsAsync(userId, ct);
         return TypedResults.Ok(stats);
     }
 }

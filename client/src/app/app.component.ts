@@ -1,5 +1,7 @@
 import { Component, inject } from '@angular/core';
-import { RouterOutlet } from '@angular/router';
+import { Router, RouterOutlet, NavigationEnd } from '@angular/router';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { filter, map } from 'rxjs';
 import { NavigationComponent } from './components/navigation/navigation.component';
 import { NotificationService } from './services/notification.service';
 
@@ -11,10 +13,14 @@ import { NotificationService } from './services/notification.service';
     <div class="h-dvh overflow-hidden bg-dex-bg flex flex-col">
       <div class="flex-1 overflow-y-auto overscroll-y-none">
         <router-outlet />
-        <div class="shrink-0" aria-hidden="true" style="height: calc(4rem + env(safe-area-inset-bottom))"></div>
+        @if (!isLoginPage()) {
+          <div class="shrink-0" aria-hidden="true" style="height: calc(4rem + env(safe-area-inset-bottom))"></div>
+        }
       </div>
     </div>
-    <app-navigation />
+    @if (!isLoginPage()) {
+      <app-navigation />
+    }
 
     <!-- Toast Notifications -->
     @if (notifications.toasts().length) {
@@ -38,4 +44,13 @@ import { NotificationService } from './services/notification.service';
 })
 export class AppComponent {
   readonly notifications = inject(NotificationService);
+  private readonly router = inject(Router);
+
+  readonly isLoginPage = toSignal(
+    this.router.events.pipe(
+      filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+      map(e => e.urlAfterRedirects === '/login'),
+    ),
+    { initialValue: false },
+  );
 }

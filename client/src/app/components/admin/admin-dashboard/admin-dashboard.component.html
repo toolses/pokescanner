@@ -1,0 +1,103 @@
+<div class="p-8 max-w-6xl mx-auto space-y-8">
+  <h2 class="text-2xl font-display font-bold text-dex-text">Dashboard</h2>
+
+  <!-- Stats Grid -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-dex-surface rounded-xl p-5 border border-dex-surface-light">
+      <p class="text-3xl font-bold text-dex-text">{{ totalUsers() }}</p>
+      <p class="text-sm text-dex-text-muted mt-1">Total Users</p>
+    </div>
+    <div class="bg-dex-surface rounded-xl p-5 border border-dex-surface-light">
+      <p class="text-3xl font-bold text-dex-text">{{ todayCalls() }}</p>
+      <p class="text-sm text-dex-text-muted mt-1">API Calls Today</p>
+    </div>
+    <div class="bg-dex-surface rounded-xl p-5 border border-dex-surface-light">
+      <p class="text-3xl font-bold" [class]="todayErrors() > 0 ? 'text-dex-error' : 'text-dex-success'">{{ todayErrors() }}</p>
+      <p class="text-sm text-dex-text-muted mt-1">Errors Today</p>
+    </div>
+    <div class="bg-dex-surface rounded-xl p-5 border border-dex-surface-light">
+      <p class="text-3xl font-bold text-dex-gold">{{ todayTokens() | number }}</p>
+      <p class="text-sm text-dex-text-muted mt-1">Tokens Today</p>
+    </div>
+  </div>
+
+  <!-- Today's Usage Breakdown -->
+  <div class="bg-dex-surface rounded-xl border border-dex-surface-light">
+    <div class="px-6 py-4 border-b border-white/10 flex items-center justify-between">
+      <h3 class="text-lg font-semibold text-dex-text">Today's Usage</h3>
+      <a routerLink="/admin/traces" class="text-sm text-dex-accent hover:text-dex-accent-light transition-colors">
+        View traces →
+      </a>
+    </div>
+    @if (usageService.todayUsage().length === 0) {
+      <div class="p-6 text-center text-dex-text-muted">No API calls recorded today.</div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-left text-dex-text-muted border-b border-white/5">
+              <th class="px-6 py-3 font-medium">Provider</th>
+              <th class="px-6 py-3 font-medium">Endpoint</th>
+              <th class="px-6 py-3 font-medium">Model</th>
+              <th class="px-6 py-3 font-medium text-right">Calls</th>
+              <th class="px-6 py-3 font-medium text-right">Avg (ms)</th>
+              <th class="px-6 py-3 font-medium text-right">Errors</th>
+              <th class="px-6 py-3 font-medium text-right">Tokens</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of usageService.todayUsage(); track row.provider + row.endpoint) {
+              <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+                <td class="px-6 py-3">
+                  <span class="px-2 py-0.5 rounded text-xs font-medium" [class]="providerBadgeClass(row.provider)">
+                    {{ providerLabel(row.provider) }}
+                  </span>
+                </td>
+                <td class="px-6 py-3 text-dex-text">{{ row.endpoint }}</td>
+                <td class="px-6 py-3 text-dex-text-muted">{{ row.usedModel ?? '—' }}</td>
+                <td class="px-6 py-3 text-right text-dex-text">{{ row.totalCalls }}</td>
+                <td class="px-6 py-3 text-right text-dex-text-muted">{{ row.avgResponseMs }}</td>
+                <td class="px-6 py-3 text-right" [class]="row.errorCount > 0 ? 'text-dex-error' : 'text-dex-text-muted'">
+                  {{ row.errorCount }}
+                </td>
+                <td class="px-6 py-3 text-right text-dex-gold">{{ row.totalTokens | number }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+  <!-- Daily History -->
+  <div class="bg-dex-surface rounded-xl border border-dex-surface-light">
+    <div class="px-6 py-4 border-b border-white/10">
+      <h3 class="text-lg font-semibold text-dex-text">Last 30 Days</h3>
+    </div>
+    @if (dailyGrouped().length === 0) {
+      <div class="p-6 text-center text-dex-text-muted">No usage data yet.</div>
+    } @else {
+      <div class="divide-y divide-white/5">
+        @for (day of dailyGrouped(); track day.date) {
+          <div class="px-6 py-4">
+            <p class="text-sm font-medium text-dex-text-muted mb-2">{{ formatDate(day.date) }}</p>
+            <div class="flex flex-wrap gap-3">
+              @for (p of day.providers; track p.provider + p.endpoint) {
+                <div class="flex items-center gap-2 text-sm">
+                  <span class="px-2 py-0.5 rounded text-xs font-medium" [class]="providerBadgeClass(p.provider)">
+                    {{ providerLabel(p.provider) }}
+                  </span>
+                  <span class="text-dex-text">{{ p.totalCalls }} calls</span>
+                  <span class="text-dex-text-muted">· {{ p.avgResponseMs }}ms</span>
+                  @if (p.totalTokens > 0) {
+                    <span class="text-dex-gold">· {{ p.totalTokens | number }} tok</span>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

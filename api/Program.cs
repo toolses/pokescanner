@@ -1,7 +1,10 @@
+using System.Security.Claims;
 using DbUp;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.Extensions.Http.Resilience;
+using Microsoft.IdentityModel.Tokens;
 using Npgsql;
 using Scalar.AspNetCore;
 using PokeScanner.Api.Configuration;
@@ -96,6 +99,56 @@ builder.Services.AddScoped<CardMatchingService>();
 builder.Services.AddScoped<CollectionService>();
 builder.Services.AddScoped<WishlistService>();
 builder.Services.AddScoped<ExpertService>();
+builder.Services.AddScoped<UserProfileService>();
+
+// ── Auth (Supabase JWT via JWKS) ─────────────────────────────────────────────
+var supabaseUrl = builder.Configuration["SUPABASE_URL"] ?? string.Empty;
+
+if (!string.IsNullOrWhiteSpace(supabaseUrl))
+{
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
+        {
+            options.Authority        = $"{supabaseUrl}/auth/v1";
+            options.MetadataAddress  = $"{supabaseUrl}/auth/v1/.well-known/openid-configuration";
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer           = true,
+                ValidIssuer              = $"{supabaseUrl}/auth/v1",
+                ValidateAudience         = true,
+                ValidAudience            = "authenticated",
+                ValidateLifetime         = true,
+                ValidateIssuerSigningKey = true,
+            };
+        });
+}
+else
+{
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer();
+}
+
+// ── Admin policy ─────────────────────────────────────────────────────────────
+var adminUserIds = (builder.Configuration["ADMIN_USER_IDS"] ?? "")
+    .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+    .Where(s => Guid.TryParse(s, out _))
+    .Select(s => Guid.Parse(s))
+    .ToHashSet();
+
+builder.Services.AddSingleton(new AdminSettings(adminUserIds));
+
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("AdminOnly", policy =>
+        policy.RequireAssertion(ctx =>
+        {
+            var sub = ctx.User.FindFirstValue(ClaimTypes.NameIdentifier)
+                   ?? ctx.User.FindFirstValue("sub");
+            return sub is not null
+                && Guid.TryParse(sub, out var uid)
+                && adminUserIds.Contains(uid);
+        }));
+});
 
 // ── Database ──────────────────────────────────────────────────────────────────
 var connectionString = builder.Configuration["SUPABASE_CONNECTION_STRING"] ?? string.Empty;
@@ -168,9 +221,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors("Frontend");
+app.UseAuthentication();
+app.UseAuthorization();
 
 // ── Endpoints ─────────────────────────────────────────────────────────────────
 app.MapHealthEndpoint();
+app.MapAuthEndpoints();
 app.MapCardScanEndpoints();
 app.MapCardEndpoints();
 app.MapSetEndpoints();
@@ -178,6 +234,11 @@ app.MapCollectionEndpoints();
 app.MapWishlistEndpoints();
 app.MapExpertEndpoints();
 app.MapStatsEndpoints();
+app.MapAdminAuthEndpoints();
+app.MapAdminUsageEndpoints();
+app.MapAdminTraceEndpoints();
+app.MapAdminUserEndpoints();
+app.MapAdminApiTestEndpoints();
 
 app.Run();
 

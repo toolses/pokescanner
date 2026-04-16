@@ -8,7 +8,9 @@ public static class CardEndpoints
 {
     public static IEndpointRouteBuilder MapCardEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/cards").WithTags("Cards");
+        var group = app.MapGroup("/api/cards")
+            .WithTags("Cards")
+            .RequireAuthorization();
 
         group.MapGet("/search", SearchCards)
             .WithName("SearchCards")

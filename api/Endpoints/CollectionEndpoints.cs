@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Http.HttpResults;
 using PokeScanner.Api.Models;
 using PokeScanner.Api.Services;
@@ -8,7 +9,9 @@ public static class CollectionEndpoints
 {
     public static IEndpointRouteBuilder MapCollectionEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/collection").WithTags("Collection");
+        var group = app.MapGroup("/api/collection")
+            .WithTags("Collection")
+            .RequireAuthorization();
 
         group.MapGet("/", GetCollection);
         group.MapGet("/{id:guid}", GetCollectionCard);
@@ -19,40 +22,43 @@ public static class CollectionEndpoints
         return app;
     }
 
+    private static Guid GetUserId(ClaimsPrincipal user)
+        => Guid.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
     private static async Task<Ok<IEnumerable<CollectionCard>>> GetCollection(
-        CollectionService service, CancellationToken ct)
+        ClaimsPrincipal user, CollectionService service, CancellationToken ct)
     {
-        var cards = await service.GetAllAsync(ct);
+        var cards = await service.GetAllAsync(GetUserId(user), ct);
         return TypedResults.Ok(cards);
     }
 
     private static async Task<Results<Ok<CollectionCard>, NotFound>> GetCollectionCard(
-        Guid id, CollectionService service, CancellationToken ct)
+        Guid id, ClaimsPrincipal user, CollectionService service, CancellationToken ct)
     {
-        var card = await service.GetByIdAsync(id, ct);
+        var card = await service.GetByIdAsync(id, GetUserId(user), ct);
         if (card is null) return TypedResults.NotFound();
         return TypedResults.Ok(card);
     }
 
     private static async Task<Created<CollectionCard>> AddToCollection(
-        AddCollectionCardRequest req, CollectionService service, CancellationToken ct)
+        AddCollectionCardRequest req, ClaimsPrincipal user, CollectionService service, CancellationToken ct)
     {
-        var card = await service.AddAsync(req, ct);
+        var card = await service.AddAsync(GetUserId(user), req, ct);
         return TypedResults.Created($"/api/collection/{card.Id}", card);
     }
 
     private static async Task<Results<Ok, NotFound>> UpdateCollectionCard(
-        Guid id, UpdateCollectionCardRequest req, CollectionService service, CancellationToken ct)
+        Guid id, UpdateCollectionCardRequest req, ClaimsPrincipal user, CollectionService service, CancellationToken ct)
     {
-        var updated = await service.UpdateAsync(id, req, ct);
+        var updated = await service.UpdateAsync(id, GetUserId(user), req, ct);
         if (!updated) return TypedResults.NotFound();
         return TypedResults.Ok();
     }
 
     private static async Task<Results<Ok, NotFound>> DeleteCollectionCard(
-        Guid id, CollectionService service, CancellationToken ct)
+        Guid id, ClaimsPrincipal user, CollectionService service, CancellationToken ct)
     {
-        var deleted = await service.DeleteAsync(id, ct);
+        var deleted = await service.DeleteAsync(id, GetUserId(user), ct);
         if (!deleted) return TypedResults.NotFound();
         return TypedResults.Ok();
     }

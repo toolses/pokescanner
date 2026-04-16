@@ -1,0 +1,140 @@
+<div class="p-8 max-w-5xl mx-auto space-y-8">
+  <h2 class="text-2xl font-display font-bold text-dex-text">API Testing</h2>
+
+  <!-- Card Scan Test -->
+  <div class="bg-dex-surface rounded-xl border border-dex-surface-light">
+    <div class="px-6 py-4 border-b border-white/10">
+      <h3 class="text-lg font-semibold text-dex-text">Card Scan Test</h3>
+      <p class="text-sm text-dex-text-muted mt-1">Upload a card image and test the AI scan pipeline.</p>
+    </div>
+    <div class="p-6 space-y-4">
+      <div class="flex gap-3">
+        <input type="file" accept="image/jpeg,image/png,image/webp"
+               (change)="onFileSelect($event)"
+               class="flex-1 text-sm text-dex-text-muted file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-dex-accent file:text-white file:font-medium file:cursor-pointer hover:file:bg-dex-accent-light" />
+        <button (click)="runScan()"
+                [disabled]="!scanFile() || scanLoading()"
+                class="px-5 py-2 bg-dex-accent text-white font-medium rounded-lg hover:bg-dex-accent-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          {{ scanLoading() ? 'Scanning...' : 'Scan' }}
+        </button>
+      </div>
+
+      @if (scanError()) {
+        <div class="bg-dex-error/10 border border-dex-error/30 rounded-lg p-4 text-sm text-dex-error">
+          {{ scanError() }}
+        </div>
+      }
+
+      @if (scanResult(); as result) {
+        <div class="space-y-4">
+          <div class="flex items-center gap-3">
+            <span class="text-sm text-dex-text-muted">Correlation ID:</span>
+            <a [routerLink]="['/admin/traces']" class="text-sm text-dex-accent hover:text-dex-accent-light font-mono">
+              {{ result.correlationId }}
+            </a>
+          </div>
+
+          <!-- AI Result -->
+          <div>
+            <p class="text-sm font-medium text-dex-text-muted mb-2">AI Identification</p>
+            <div class="bg-dex-bg rounded-lg p-4 grid grid-cols-2 gap-2 text-sm">
+              <div><span class="text-dex-text-muted">Name:</span> <span class="text-dex-text ml-1">{{ result.aiResult.name ?? '—' }}</span></div>
+              <div><span class="text-dex-text-muted">Set:</span> <span class="text-dex-text ml-1">{{ result.aiResult.setName ?? '—' }}</span></div>
+              <div><span class="text-dex-text-muted">Number:</span> <span class="text-dex-text ml-1">{{ result.aiResult.cardNumber ?? result.aiResult.localId ?? '—' }}</span></div>
+              <div><span class="text-dex-text-muted">HP:</span> <span class="text-dex-text ml-1">{{ result.aiResult.hp ?? '—' }}</span></div>
+              <div><span class="text-dex-text-muted">Rarity:</span> <span class="text-dex-text ml-1">{{ result.aiResult.rarity ?? '—' }}</span></div>
+              <div><span class="text-dex-text-muted">Stage:</span> <span class="text-dex-text ml-1">{{ result.aiResult.stage ?? '—' }}</span></div>
+              @if (result.aiResult.types) {
+                <div class="col-span-2"><span class="text-dex-text-muted">Types:</span> <span class="text-dex-text ml-1">{{ result.aiResult.types.join(', ') }}</span></div>
+              }
+            </div>
+          </div>
+
+          <!-- Exact Match -->
+          @if (result.exactMatch) {
+            <div>
+              <p class="text-sm font-medium text-dex-success mb-2">Exact Match</p>
+              <div class="flex items-center gap-3 bg-dex-bg rounded-lg p-3">
+                @if (result.exactMatch.image) {
+                  <img [src]="result.exactMatch.image + '/low.webp'" class="w-16 h-auto rounded" [alt]="result.exactMatch.name" />
+                }
+                <div>
+                  <p class="text-dex-text font-medium">{{ result.exactMatch.name }}</p>
+                  <p class="text-dex-text-muted text-xs">{{ result.exactMatch.id }}</p>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- Candidates -->
+          @if (result.candidates.length > 0) {
+            <div>
+              <p class="text-sm font-medium text-dex-text-muted mb-2">Candidates ({{ result.candidates.length }})</p>
+              <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                @for (card of result.candidates; track card.id) {
+                  <div class="bg-dex-bg rounded-lg p-2 flex items-center gap-2">
+                    @if (card.image) {
+                      <img [src]="card.image + '/low.webp'" class="w-10 h-auto rounded" [alt]="card.name" />
+                    }
+                    <div class="min-w-0">
+                      <p class="text-dex-text text-sm truncate">{{ card.name }}</p>
+                      <p class="text-dex-text-dark text-xs truncate">{{ card.id }}</p>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Expert Chat Test -->
+  <div class="bg-dex-surface rounded-xl border border-dex-surface-light">
+    <div class="px-6 py-4 border-b border-white/10">
+      <h3 class="text-lg font-semibold text-dex-text">Expert Chat Test</h3>
+      <p class="text-sm text-dex-text-muted mt-1">Send a message to the AI provider chain and see the raw response.</p>
+    </div>
+    <div class="p-6 space-y-4">
+      <div class="flex gap-3">
+        <input type="text"
+               [ngModel]="expertMessage()"
+               (ngModelChange)="expertMessage.set($event)"
+               (keyup.enter)="runExpert()"
+               placeholder="Ask a Pokémon TCG question..."
+               class="flex-1 bg-dex-bg border border-dex-surface-light rounded-lg px-4 py-2.5 text-dex-text placeholder:text-dex-text-muted/50 focus:outline-none focus:border-dex-accent" />
+        <button (click)="runExpert()"
+                [disabled]="!expertMessage().trim() || expertLoading()"
+                class="px-5 py-2 bg-dex-accent text-white font-medium rounded-lg hover:bg-dex-accent-light transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+          {{ expertLoading() ? 'Testing...' : 'Send' }}
+        </button>
+      </div>
+
+      @if (expertError()) {
+        <div class="bg-dex-error/10 border border-dex-error/30 rounded-lg p-4 text-sm text-dex-error">
+          {{ expertError() }}
+        </div>
+      }
+
+      @if (expertResult(); as result) {
+        <div class="space-y-3">
+          <div class="flex items-center gap-4 text-sm">
+            <span class="text-dex-text-muted">Provider:</span>
+            <span class="px-2 py-0.5 rounded text-xs font-medium bg-blue-500/20 text-blue-300">{{ result.provider }}</span>
+            <span class="text-dex-text-muted">Duration:</span>
+            <span class="text-dex-text">{{ result.durationMs }}ms</span>
+            <span class="text-dex-text-muted">Correlation:</span>
+            <a [routerLink]="['/admin/traces']" class="text-dex-accent hover:text-dex-accent-light font-mono text-xs">
+              {{ result.correlationId }}
+            </a>
+          </div>
+          <div>
+            <p class="text-sm font-medium text-dex-text-muted mb-1">Response</p>
+            <pre class="bg-dex-bg rounded-lg p-4 text-sm text-dex-text whitespace-pre-wrap overflow-x-auto max-h-96 overflow-y-auto">{{ result.response }}</pre>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</div>

@@ -8,7 +8,9 @@ public static class SetEndpoints
 {
     public static IEndpointRouteBuilder MapSetEndpoints(this IEndpointRouteBuilder app)
     {
-        var group = app.MapGroup("/api/sets").WithTags("Sets");
+        var group = app.MapGroup("/api/sets")
+            .WithTags("Sets")
+            .RequireAuthorization();
 
         group.MapGet("/", GetSets)
             .WithName("GetSets")

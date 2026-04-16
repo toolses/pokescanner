@@ -15,7 +15,8 @@ public static class CardScanEndpoints
             .WithName("ScanCard")
             .WithSummary("Upload a card image, identify it via AI vision, and return TCGdex match candidates")
             .WithTags("Scan")
-            .DisableAntiforgery();
+            .DisableAntiforgery()
+            .RequireAuthorization();
 
         return app;
     }

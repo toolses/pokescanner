@@ -1,0 +1,65 @@
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Injectable, inject, signal } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+import { environment } from '../../environments/environment';
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  displayName: string;
+  isAdmin: boolean;
+  createdAt: string;
+}
+
+@Injectable({ providedIn: 'root' })
+export class AdminUserService {
+  private readonly http = inject(HttpClient);
+
+  private readonly _users = signal<AdminUser[]>([]);
+  private readonly _loading = signal(false);
+  private readonly _error = signal<string | null>(null);
+  private readonly _saving = signal<string | null>(null);
+
+  readonly users = this._users.asReadonly();
+  readonly loading = this._loading.asReadonly();
+  readonly error = this._error.asReadonly();
+  readonly saving = this._saving.asReadonly();
+
+  async loadUsers(search?: string): Promise<void> {
+    this._loading.set(true);
+    this._error.set(null);
+    try {
+      let params = new HttpParams();
+      if (search) params = params.set('search', search);
+
+      const result = await firstValueFrom(
+        this.http.get<AdminUser[]>(`${environment.apiBaseUrl}/admin/users`, { params }),
+      );
+      this._users.set(result);
+    } catch (err: any) {
+      this._error.set(err?.message ?? 'Could not load users');
+    } finally {
+      this._loading.set(false);
+    }
+  }
+
+  async toggleAdmin(userId: string, isAdmin: boolean): Promise<boolean> {
+    this._saving.set(userId);
+    try {
+      const updated = await firstValueFrom(
+        this.http.patch<AdminUser>(
+          `${environment.apiBaseUrl}/admin/users/${userId}/admin`,
+          { isAdmin },
+        ),
+      );
+      this._users.update(users =>
+        users.map(u => (u.id === userId ? updated : u)),
+      );
+      return true;
+    } catch {
+      return false;
+    } finally {
+      this._saving.set(null);
+    }
+  }
+}

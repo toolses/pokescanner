@@ -1,0 +1,65 @@
+<div class="p-8 max-w-5xl mx-auto space-y-6">
+  <h2 class="text-2xl font-display font-bold text-dex-text">Users</h2>
+
+  <!-- Search -->
+  <div class="flex gap-3">
+    <input
+      type="text"
+      [ngModel]="searchQuery()"
+      (ngModelChange)="searchQuery.set($event)"
+      (keyup.enter)="search()"
+      placeholder="Search by name or email..."
+      class="flex-1 bg-dex-surface border border-dex-surface-light rounded-lg px-4 py-2.5 text-dex-text placeholder:text-dex-text-muted/50 focus:outline-none focus:border-dex-accent" />
+    <button (click)="search()"
+            class="px-5 py-2.5 bg-dex-accent text-white font-medium rounded-lg hover:bg-dex-accent-light transition-colors">
+      Search
+    </button>
+  </div>
+
+  <!-- Users table -->
+  <div class="bg-dex-surface rounded-xl border border-dex-surface-light overflow-hidden">
+    @if (userService.loading()) {
+      <div class="p-8 text-center text-dex-text-muted">Loading users...</div>
+    } @else if (userService.users().length === 0) {
+      <div class="p-8 text-center text-dex-text-muted">No users found.</div>
+    } @else {
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-dex-text-muted border-b border-white/10">
+            <th class="px-6 py-3 font-medium">User</th>
+            <th class="px-6 py-3 font-medium">Email</th>
+            <th class="px-6 py-3 font-medium">Joined</th>
+            <th class="px-6 py-3 font-medium text-center">Admin</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of userService.users(); track user.id) {
+            <tr class="border-b border-white/5 hover:bg-white/5 transition-colors">
+              <td class="px-6 py-3">
+                <div class="flex items-center gap-2">
+                  <span class="text-dex-text font-medium">{{ user.displayName }}</span>
+                  @if (user.isAdmin) {
+                    <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-dex-gold/20 text-dex-gold">ADMIN</span>
+                  }
+                </div>
+              </td>
+              <td class="px-6 py-3 text-dex-text-muted">{{ user.email }}</td>
+              <td class="px-6 py-3 text-dex-text-muted">{{ formatDate(user.createdAt) }}</td>
+              <td class="px-6 py-3 text-center">
+                <button
+                  (click)="toggleAdmin(user.id, user.isAdmin)"
+                  [disabled]="userService.saving() === user.id"
+                  class="px-3 py-1 rounded text-xs font-medium transition-colors disabled:opacity-50"
+                  [class]="user.isAdmin
+                    ? 'bg-dex-error/20 text-dex-error hover:bg-dex-error/30'
+                    : 'bg-dex-success/20 text-dex-success hover:bg-dex-success/30'">
+                  {{ userService.saving() === user.id ? '...' : (user.isAdmin ? 'Remove' : 'Grant') }}
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>
