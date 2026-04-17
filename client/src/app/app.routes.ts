@@ -27,6 +27,12 @@ export const routes: Routes = [
       import('./components/collection/collection.component').then(m => m.CollectionComponent),
   },
   {
+    path: 'collection/binders/:id',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./components/binder-detail/binder-detail.component').then(m => m.BinderDetailComponent),
+  },
+  {
     path: 'collection/:id',
     canActivate: [authGuard],
     loadComponent: () =>

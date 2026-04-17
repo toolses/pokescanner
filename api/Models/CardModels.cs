@@ -272,6 +272,40 @@ public record CollectionStats
     public CollectionCard[] RecentAdditions { get; init; } = [];
 }
 
+// ── Binders ───────────────────────────────────────────────────────────────
+public record Binder
+{
+    public Guid Id { get; init; }
+    public Guid UserId { get; init; }
+    public string Name { get; init; } = string.Empty;
+    public string? ArtCardTcgdexId { get; init; }
+    public string? ArtCardImageUrl { get; init; }
+    public int CardCount { get; init; }
+    public DateTimeOffset CreatedAt { get; init; }
+}
+
+public record BinderCard
+{
+    public Guid Id { get; init; }
+    public Guid BinderId { get; init; }
+    public string TcgdexCardId { get; init; } = string.Empty;
+    public string CardName { get; init; } = string.Empty;
+    public string? CardImageUrl { get; init; }
+    public DateTimeOffset AddedAt { get; init; }
+}
+
+public record CreateBinderRequest(
+    string Name,
+    string? ArtCardTcgdexId = null,
+    string? ArtCardImageUrl = null);
+
+public record AddBinderCardsRequest(BinderCardInput[] Cards);
+
+public record BinderCardInput(
+    string TcgdexCardId,
+    string CardName,
+    string? CardImageUrl = null);
+
 // ── Expert session/message models ─────────────────────────────────────────
 public record ExpertSession
 {

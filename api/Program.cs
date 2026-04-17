@@ -98,6 +98,7 @@ builder.Services.AddScoped<TcgDexService>();
 builder.Services.AddScoped<CardMatchingService>();
 builder.Services.AddScoped<CollectionService>();
 builder.Services.AddScoped<WishlistService>();
+builder.Services.AddScoped<BinderService>();
 builder.Services.AddScoped<ExpertService>();
 builder.Services.AddScoped<UserProfileService>();
 
@@ -232,6 +233,7 @@ app.MapCardEndpoints();
 app.MapSetEndpoints();
 app.MapCollectionEndpoints();
 app.MapWishlistEndpoints();
+app.MapBinderEndpoints();
 app.MapExpertEndpoints();
 app.MapStatsEndpoints();
 app.MapAdminAuthEndpoints();
