@@ -5,11 +5,12 @@ import { TcgDexService } from '../../services/tcgdex.service';
 import { TcgDexCardBrief } from '../../services/card-scan.service';
 import { CollectionService } from '../../services/collection.service';
 import { SetCacheService } from '../../services/set-cache.service';
+import { CardModalComponent } from '../card-modal/card-modal.component';
 
 @Component({
   selector: 'app-binder-detail',
   standalone: true,
-  imports: [],
+  imports: [CardModalComponent],
   template: `
     <div class="max-w-lg mx-auto p-4 pb-24 space-y-4">
       <!-- Header -->
@@ -173,12 +174,12 @@ import { SetCacheService } from '../../services/set-cache.service';
     }
 
     <!-- Card Zoom Modal -->
-    @if (zoomedCard()) {
-      <div class="fixed inset-0 bg-black/80 z-[70] flex items-center justify-center p-6"
-           (click)="closeZoom()">
-        <img [src]="zoomedCard()!.cardImageUrl" [alt]="zoomedCard()!.cardName"
-             class="max-w-full max-h-full object-contain rounded-2xl shadow-2xl" />
-      </div>
+    @if (zoomedCard()?.cardImageUrl) {
+      <app-card-modal
+        [imageUrl]="zoomedCard()!.cardImageUrl!"
+        [cardName]="zoomedCard()!.cardName"
+        [visible]="true"
+        (close)="closeZoom()" />
     }
 
     <!-- Edit Binder Modal -->
