@@ -4,6 +4,7 @@ import { BinderService, Binder, BinderCard, UpdateBinderRequest } from '../../se
 import { TcgDexService } from '../../services/tcgdex.service';
 import { TcgDexCardBrief } from '../../services/card-scan.service';
 import { CollectionService } from '../../services/collection.service';
+import { SetCacheService } from '../../services/set-cache.service';
 
 @Component({
   selector: 'app-binder-detail',
@@ -41,7 +42,7 @@ import { CollectionService } from '../../services/collection.service';
         <p class="text-sm text-dex-text-muted">{{ cards().length }} card{{ cards().length === 1 ? '' : 's' }}</p>
         <div class="grid grid-cols-3 gap-3">
           @for (card of cards(); track card.id) {
-            <div class="bg-dex-surface rounded-xl p-2 border border-dex-surface-light group relative">
+            <div class="bg-dex-surface rounded-xl p-2 border border-dex-surface-light cardhover group relative">
               @if (card.cardImageUrl) {
                 <img [src]="card.cardImageUrl" [alt]="card.cardName"
                      class="w-full aspect-[3/4] object-contain rounded-lg bg-dex-bg mb-1" loading="lazy" />
@@ -49,6 +50,16 @@ import { CollectionService } from '../../services/collection.service';
                 <div class="w-full aspect-[3/4] rounded-lg bg-dex-bg flex items-center justify-center text-2xl mb-1">🃏</div>
               }
               <p class="text-xs font-medium text-dex-text truncate">{{ card.cardName }}</p>
+              @if (setCache.getSet(setCache.setIdFromCardId(card.tcgdexCardId)); as set) {
+                <div class="flex items-center gap-1 mt-0.5">
+                  @if (set.symbol) {
+                    <img [src]="set.symbol + '.webp'" [alt]="set.name" class="h-3 w-3 object-contain" loading="lazy" />
+                  }
+                  @if (set.logo) {
+                    <img [src]="set.logo + '.webp'" [alt]="set.name" class="h-3 object-contain" loading="lazy" />
+                  }
+                </div>
+              }
               <button (click)="removeCard(card)"
                       class="absolute top-1 right-1 w-5 h-5 bg-black/50 text-white rounded-full text-xs leading-none opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 &times;
@@ -230,6 +241,7 @@ export class BinderDetailComponent implements OnInit {
   private readonly binderService = inject(BinderService);
   private readonly tcgDex = inject(TcgDexService);
   private readonly collectionService = inject(CollectionService);
+  readonly setCache = inject(SetCacheService);
 
   readonly binder = signal<Binder | null>(null);
   readonly cards = signal<BinderCard[]>([]);
@@ -255,6 +267,7 @@ export class BinderDetailComponent implements OnInit {
 
   ngOnInit(): void {
     this.binderId = this.route.snapshot.paramMap.get('id') ?? '';
+    this.setCache.ensureLoaded();
     this.loadBinder();
   }
 
