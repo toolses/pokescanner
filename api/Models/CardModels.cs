@@ -306,6 +306,11 @@ public record BinderCardInput(
     string CardName,
     string? CardImageUrl = null);
 
+public record UpdateBinderRequest(
+    string Name,
+    string? ArtCardTcgdexId = null,
+    string? ArtCardImageUrl = null);
+
 // ── Expert session/message models ─────────────────────────────────────────
 public record ExpertSession
 {

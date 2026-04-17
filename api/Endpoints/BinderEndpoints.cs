@@ -15,6 +15,7 @@ public static class BinderEndpoints
 
         group.MapGet("/", GetBinders);
         group.MapPost("/", CreateBinder);
+        group.MapPut("/{id:guid}", UpdateBinder);
         group.MapDelete("/{id:guid}", DeleteBinder);
         group.MapGet("/{id:guid}/cards", GetBinderCards);
         group.MapPost("/{id:guid}/cards", AddBinderCards);
@@ -38,6 +39,14 @@ public static class BinderEndpoints
     {
         var binder = await service.CreateBinderAsync(GetUserId(user), req, ct);
         return TypedResults.Created($"/api/binders/{binder.Id}", binder);
+    }
+
+    private static async Task<Results<Ok<Binder>, NotFound>> UpdateBinder(
+        Guid id, UpdateBinderRequest req, ClaimsPrincipal user, BinderService service, CancellationToken ct)
+    {
+        var binder = await service.UpdateBinderAsync(id, GetUserId(user), req, ct);
+        if (binder is null) return TypedResults.NotFound();
+        return TypedResults.Ok(binder);
     }
 
     private static async Task<Results<Ok, NotFound>> DeleteBinder(
