@@ -58,6 +58,20 @@ public sealed class BinderService
         return (await GetBinderAsync(id, userId, ct))!;
     }
 
+    public async Task<Binder?> UpdateBinderAsync(Guid id, Guid userId, UpdateBinderRequest req, CancellationToken ct)
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync(ct);
+        var rows = await conn.ExecuteAsync(
+            """
+            UPDATE user_binders
+            SET name = @Name, art_card_tcgdex_id = @ArtCardTcgdexId, art_card_image_url = @ArtCardImageUrl
+            WHERE id = @Id AND user_id = @UserId
+            """,
+            new { Id = id, UserId = userId, req.Name, req.ArtCardTcgdexId, req.ArtCardImageUrl });
+        if (rows == 0) return null;
+        return await GetBinderAsync(id, userId, ct);
+    }
+
     public async Task<bool> DeleteBinderAsync(Guid id, Guid userId, CancellationToken ct)
     {
         await using var conn = await _dataSource.OpenConnectionAsync(ct);

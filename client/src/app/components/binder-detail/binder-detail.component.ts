@@ -1,8 +1,9 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { BinderService, Binder, BinderCard } from '../../services/binder.service';
+import { BinderService, Binder, BinderCard, UpdateBinderRequest } from '../../services/binder.service';
 import { TcgDexService } from '../../services/tcgdex.service';
 import { TcgDexCardBrief } from '../../services/card-scan.service';
+import { CollectionService } from '../../services/collection.service';
 
 @Component({
   selector: 'app-binder-detail',
@@ -16,6 +17,10 @@ import { TcgDexCardBrief } from '../../services/card-scan.service';
         <h1 class="text-2xl font-display font-bold text-dex-text flex-1 truncate">
           {{ binder()?.name ?? 'Binder' }}
         </h1>
+        <button (click)="openEditModal()"
+                class="text-dex-text-muted text-xl leading-none px-1" title="Edit binder">
+          ✎
+        </button>
         <button (click)="openAddOverlay()"
                 class="bg-dex-accent text-white font-bold text-xl w-9 h-9 rounded-full flex items-center justify-center shrink-0">
           +
@@ -72,10 +77,29 @@ import { TcgDexCardBrief } from '../../services/card-scan.service';
             <button (click)="closeAddOverlay()" class="text-dex-text-muted text-3xl leading-none">&times;</button>
           </div>
 
+          <!-- Scope toggle -->
+          <div class="px-4 pt-4 shrink-0">
+            <div class="flex gap-1 bg-dex-bg rounded-lg p-1">
+              <button (click)="setSearchScope('all')"
+                      [class]="searchScope() === 'all'
+                        ? 'flex-1 py-1.5 rounded-md text-xs font-semibold bg-dex-accent text-white'
+                        : 'flex-1 py-1.5 rounded-md text-xs font-semibold text-dex-text-muted hover:text-dex-text'">
+                All Cards
+              </button>
+              <button (click)="setSearchScope('collection')"
+                      [class]="searchScope() === 'collection'
+                        ? 'flex-1 py-1.5 rounded-md text-xs font-semibold bg-dex-accent text-white'
+                        : 'flex-1 py-1.5 rounded-md text-xs font-semibold text-dex-text-muted hover:text-dex-text'">
+                My Collection
+              </button>
+            </div>
+          </div>
+
           <!-- Search bar -->
           <div class="p-4 shrink-0">
             <form (submit)="searchCards($event)" class="flex gap-2">
-              <input #overlayInput type="text" placeholder="Search cards by name..."
+              <input #overlayInput type="text"
+                     [placeholder]="searchScope() === 'collection' ? 'Filter your collection...' : 'Search cards by name...'"
                      class="flex-1 bg-dex-bg border border-dex-surface-light rounded-lg px-3 py-2 text-dex-text text-sm placeholder-dex-text-muted" />
               <button type="submit"
                       class="bg-dex-accent text-white font-semibold px-4 py-2 rounded-lg text-sm shrink-0"
@@ -104,8 +128,6 @@ import { TcgDexCardBrief } from '../../services/card-scan.service';
                     @if (card.image) {
                       <img [src]="card.image + '/high.webp'" [alt]="card.name"
                            class="w-full aspect-[3/4] object-contain rounded-lg bg-dex-bg mb-1" loading="lazy" />
-                    } @else {
-                      <div class="w-full aspect-[3/4] rounded-lg bg-dex-bg flex items-center justify-center text-2xl mb-1">🃏</div>
                     }
                     <p class="text-xs font-medium text-dex-text truncate">{{ card.name }}</p>
                   </button>
@@ -114,7 +136,13 @@ import { TcgDexCardBrief } from '../../services/card-scan.service';
             } @else if (overlaySearchDone()) {
               <div class="text-center py-8 text-dex-text-muted text-sm">No cards found. Try a different name.</div>
             } @else {
-              <div class="text-center py-8 text-dex-text-muted text-sm">Search for cards to add to this binder.</div>
+              <div class="text-center py-8 text-dex-text-muted text-sm">
+                @if (searchScope() === 'collection') {
+                  Search your collection to add cards to this binder.
+                } @else {
+                  Search for cards to add to this binder.
+                }
+              </div>
             }
           </div>
 
@@ -131,6 +159,69 @@ import { TcgDexCardBrief } from '../../services/card-scan.service';
         </div>
       </div>
     }
+
+    <!-- Edit Binder Modal -->
+    @if (showEditModal()) {
+      <div class="fixed inset-0 bg-black/60 z-[60] flex items-end justify-center"
+           (click)="closeEditModal()">
+        <div class="bg-dex-surface w-full max-w-lg rounded-t-2xl p-5 space-y-4 overflow-y-auto max-h-[90vh]"
+             style="padding-bottom: calc(1.25rem + env(safe-area-inset-bottom))"
+             (click)="$event.stopPropagation()">
+          <div class="flex items-center justify-between">
+            <h2 class="text-lg font-bold text-dex-text">Edit Binder</h2>
+            <button (click)="closeEditModal()" class="text-dex-text-muted text-3xl leading-none">&times;</button>
+          </div>
+
+          <input type="text" placeholder="Binder name..."
+                 [value]="editBinderName()"
+                 (input)="editBinderName.set($any($event.target).value)"
+                 class="w-full bg-dex-bg border border-dex-surface-light rounded-lg px-3 py-2 text-dex-text text-sm placeholder-dex-text-muted" />
+
+          <div>
+            <p class="text-xs font-semibold text-dex-text-muted uppercase tracking-wide mb-2">Binder Art (optional)</p>
+
+            @if (editArtCard()) {
+              <div class="flex items-center gap-3 bg-dex-bg rounded-xl p-2 border border-dex-accent">
+                @if (editArtCard()!.image) {
+                  <img [src]="editArtCard()!.image + '/high.webp'" [alt]="editArtCard()!.name"
+                       class="w-12 h-16 object-contain rounded" loading="lazy" />
+                }
+                <span class="text-sm text-dex-text flex-1 truncate">{{ editArtCard()!.name }}</span>
+                <button (click)="editArtCard.set(null)" class="text-xs text-dex-text-muted shrink-0">Remove</button>
+              </div>
+            } @else {
+              <form (submit)="searchEditArtCards($event)" class="flex gap-2">
+                <input type="text" placeholder="Search for art card..."
+                       class="flex-1 bg-dex-bg border border-dex-surface-light rounded-lg px-3 py-2 text-dex-text text-sm placeholder-dex-text-muted" />
+                <button type="submit"
+                        class="bg-dex-surface border border-dex-surface-light text-dex-text text-sm px-3 py-2 rounded-lg shrink-0"
+                        [disabled]="editArtSearchLoading()">
+                  {{ editArtSearchLoading() ? '...' : 'Search' }}
+                </button>
+              </form>
+
+              @if (editArtSearchResults().length > 0) {
+                <div class="grid grid-cols-4 gap-2 mt-2 max-h-44 overflow-y-auto">
+                  @for (card of editArtSearchResults(); track card.id) {
+                    <button (click)="selectEditArtCard(card)"
+                            class="bg-dex-bg rounded-lg p-1 border border-dex-surface-light hover:border-dex-accent transition-colors">
+                      <img [src]="card.image! + '/high.webp'" [alt]="card.name"
+                           class="w-full aspect-[3/4] object-contain rounded" loading="lazy" />
+                    </button>
+                  }
+                </div>
+              }
+            }
+          </div>
+
+          <button (click)="saveBinder()"
+                  [disabled]="!editBinderName().trim() || savingBinder()"
+                  class="w-full bg-dex-accent text-white font-semibold py-3 rounded-lg disabled:opacity-50 transition-opacity">
+            {{ savingBinder() ? 'Saving...' : 'Save Changes' }}
+          </button>
+        </div>
+      </div>
+    }
   `,
 })
 export class BinderDetailComponent implements OnInit {
@@ -138,17 +229,26 @@ export class BinderDetailComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly binderService = inject(BinderService);
   private readonly tcgDex = inject(TcgDexService);
+  private readonly collectionService = inject(CollectionService);
 
   readonly binder = signal<Binder | null>(null);
   readonly cards = signal<BinderCard[]>([]);
   readonly loading = signal(true);
 
   readonly showAddOverlay = signal(false);
+  readonly searchScope = signal<'all' | 'collection'>('all');
   readonly overlaySearchLoading = signal(false);
   readonly overlaySearchResults = signal<TcgDexCardBrief[]>([]);
   readonly overlaySearchDone = signal(false);
   readonly selectedCardIds = signal<Set<string>>(new Set());
   readonly addingCards = signal(false);
+
+  readonly showEditModal = signal(false);
+  readonly editBinderName = signal('');
+  readonly editArtCard = signal<TcgDexCardBrief | null>(null);
+  readonly editArtSearchLoading = signal(false);
+  readonly editArtSearchResults = signal<TcgDexCardBrief[]>([]);
+  readonly savingBinder = signal(false);
 
   private selectedCardsData = new Map<string, TcgDexCardBrief>();
   private binderId = '';
@@ -176,6 +276,7 @@ export class BinderDetailComponent implements OnInit {
   }
 
   openAddOverlay(): void {
+    this.searchScope.set('all');
     this.overlaySearchResults.set([]);
     this.overlaySearchDone.set(false);
     this.selectedCardIds.set(new Set());
@@ -187,17 +288,45 @@ export class BinderDetailComponent implements OnInit {
     this.showAddOverlay.set(false);
   }
 
+  setSearchScope(scope: 'all' | 'collection'): void {
+    this.searchScope.set(scope);
+    this.overlaySearchResults.set([]);
+    this.overlaySearchDone.set(false);
+  }
+
   async searchCards(event: Event): Promise<void> {
     event.preventDefault();
     const input = (event.target as HTMLFormElement).querySelector('input') as HTMLInputElement;
     const query = input.value.trim();
-    if (!query) return;
+
+    if (this.searchScope() === 'all' && !query) return;
 
     this.overlaySearchLoading.set(true);
     this.overlaySearchDone.set(false);
     try {
-      const results = await this.tcgDex.searchCards(query);
-      this.overlaySearchResults.set(results);
+      if (this.searchScope() === 'collection') {
+        if (this.collectionService.cards().length === 0) {
+          await this.collectionService.loadCollection();
+        }
+        const lowerQuery = query.toLowerCase();
+        const seen = new Set<string>();
+        const results: TcgDexCardBrief[] = [];
+        for (const card of this.collectionService.cards()) {
+          if (!card.cardImageUrl || seen.has(card.tcgdexCardId)) continue;
+          if (lowerQuery && !card.cardName.toLowerCase().includes(lowerQuery)) continue;
+          seen.add(card.tcgdexCardId);
+          results.push({
+            id: card.tcgdexCardId,
+            localId: card.localId,
+            name: card.cardName,
+            image: this.toImageBase(card.cardImageUrl),
+          });
+        }
+        this.overlaySearchResults.set(results);
+      } else {
+        const results = await this.tcgDex.searchCards(query);
+        this.overlaySearchResults.set(results.filter(c => !!c.image));
+      }
     } catch {
       this.overlaySearchResults.set([]);
     } finally {
@@ -241,5 +370,75 @@ export class BinderDetailComponent implements OnInit {
   async removeCard(card: BinderCard): Promise<void> {
     await this.binderService.removeBinderCard(this.binderId, card.id);
     this.cards.update(cs => cs.filter(c => c.id !== card.id));
+  }
+
+  openEditModal(): void {
+    const b = this.binder();
+    if (!b) return;
+    this.editBinderName.set(b.name);
+    this.editArtSearchResults.set([]);
+    if (b.artCardTcgdexId && b.artCardImageUrl) {
+      this.editArtCard.set({
+        id: b.artCardTcgdexId,
+        localId: null,
+        name: 'Art card',
+        image: this.toImageBase(b.artCardImageUrl),
+      });
+    } else {
+      this.editArtCard.set(null);
+    }
+    this.showEditModal.set(true);
+  }
+
+  closeEditModal(): void {
+    this.showEditModal.set(false);
+  }
+
+  async searchEditArtCards(event: Event): Promise<void> {
+    event.preventDefault();
+    const input = (event.target as HTMLFormElement).querySelector('input') as HTMLInputElement;
+    const query = input.value.trim();
+    if (!query) return;
+
+    this.editArtSearchLoading.set(true);
+    try {
+      const results = await this.tcgDex.searchCards(query);
+      this.editArtSearchResults.set(results.filter(c => !!c.image));
+    } catch {
+      this.editArtSearchResults.set([]);
+    } finally {
+      this.editArtSearchLoading.set(false);
+    }
+  }
+
+  selectEditArtCard(card: TcgDexCardBrief): void {
+    this.editArtCard.set(card);
+    this.editArtSearchResults.set([]);
+  }
+
+  async saveBinder(): Promise<void> {
+    const name = this.editBinderName().trim();
+    if (!name) return;
+
+    this.savingBinder.set(true);
+    try {
+      const artCard = this.editArtCard();
+      const req: UpdateBinderRequest = {
+        name,
+        artCardTcgdexId: artCard?.id ?? null,
+        artCardImageUrl: artCard?.image ? artCard.image + '/high.webp' : null,
+      };
+      const updated = await this.binderService.updateBinder(this.binderId, req);
+      this.binder.set(updated);
+      this.closeEditModal();
+    } finally {
+      this.savingBinder.set(false);
+    }
+  }
+
+  private toImageBase(url: string | null): string | null {
+    if (!url) return null;
+    // Strip format suffix (e.g. /high.webp) to get the base URL used by TCGdex
+    return url.replace(/\/[^/]+\.[a-z]+$/i, '');
   }
 }

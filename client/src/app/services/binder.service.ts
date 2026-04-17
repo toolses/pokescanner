@@ -32,6 +32,12 @@ export interface AddBinderCardsRequest {
   cards: { tcgdexCardId: string; cardName: string; cardImageUrl?: string }[];
 }
 
+export interface UpdateBinderRequest {
+  name: string;
+  artCardTcgdexId: string | null;
+  artCardImageUrl: string | null;
+}
+
 @Injectable({ providedIn: 'root' })
 export class BinderService {
   private readonly http = inject(HttpClient);
@@ -60,6 +66,14 @@ export class BinderService {
       this.http.post<Binder>(`${this.baseUrl}/binders`, req)
     );
     this._binders.update(b => [binder, ...b]);
+    return binder;
+  }
+
+  async updateBinder(id: string, req: UpdateBinderRequest): Promise<Binder> {
+    const binder = await firstValueFrom(
+      this.http.put<Binder>(`${this.baseUrl}/binders/${id}`, req)
+    );
+    this._binders.update(b => b.map(x => x.id === id ? binder : x));
     return binder;
   }
 

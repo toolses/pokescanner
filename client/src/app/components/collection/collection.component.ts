@@ -169,12 +169,8 @@ import { TcgDexCardBrief } from '../../services/card-scan.service';
                   @for (card of artSearchResults(); track card.id) {
                     <button (click)="selectArtCard(card)"
                             class="bg-dex-bg rounded-lg p-1 border border-dex-surface-light hover:border-dex-accent transition-colors">
-                      @if (card.image) {
-                        <img [src]="card.image + '/high.webp'" [alt]="card.name"
-                             class="w-full aspect-[3/4] object-contain rounded" loading="lazy" />
-                      } @else {
-                        <div class="w-full aspect-[3/4] flex items-center justify-center text-xl">🃏</div>
-                      }
+                      <img [src]="card.image! + '/high.webp'" [alt]="card.name"
+                           class="w-full aspect-[3/4] object-contain rounded" loading="lazy" />
                     </button>
                   }
                 </div>
@@ -272,7 +268,7 @@ export class CollectionComponent implements OnInit {
     this.artSearchLoading.set(true);
     try {
       const results = await this.tcgDex.searchCards(query);
-      this.artSearchResults.set(results);
+      this.artSearchResults.set(results.filter(c => !!c.image));
     } catch {
       this.artSearchResults.set([]);
     } finally {
