@@ -106,16 +106,25 @@ import { TcgDexCardBrief } from '../../services/card-scan.service';
           <div class="grid grid-cols-2 gap-4">
             @for (binder of binderService.binders(); track binder.id) {
               <button (click)="openBinder(binder.id)"
-                      class="bg-dex-surface rounded-xl border border-dex-surface-light overflow-hidden text-left cardhover">
-                @if (binder.artCardImageUrl) {
-                  <img [src]="binder.artCardImageUrl" [alt]="binder.name"
-                       class="w-full aspect-[3/4] object-contain bg-dex-bg" loading="lazy" />
-                } @else {
-                  <div class="w-full aspect-[3/4] bg-dex-bg flex items-center justify-center text-4xl">📒</div>
-                }
-                <div class="p-2">
-                  <p class="text-sm font-semibold text-dex-text truncate">{{ binder.name }}</p>
-                  <p class="text-xs text-dex-text-muted">{{ binder.cardCount }} card{{ binder.cardCount === 1 ? '' : 's' }}</p>
+                      class="flex text-left cardhover rounded-xl overflow-hidden shadow-md border border-dex-surface-light">
+                <!-- Spine with ring holes -->
+                <div class="w-5 bg-dex-accent shrink-0 flex flex-col items-center justify-around py-6 border-r border-r-black/20">
+                  <div class="w-2.5 h-2.5 rounded-full bg-black/30 shadow-inner"></div>
+                  <div class="w-2.5 h-2.5 rounded-full bg-black/30 shadow-inner"></div>
+                  <div class="w-2.5 h-2.5 rounded-full bg-black/30 shadow-inner"></div>
+                </div>
+                <!-- Cover -->
+                <div class="flex-1 bg-dex-surface overflow-hidden min-w-0">
+                  @if (binder.artCardImageUrl) {
+                    <img [src]="binder.artCardImageUrl" [alt]="binder.name"
+                         class="w-full aspect-[3/4] object-contain bg-dex-bg" loading="lazy" />
+                  } @else {
+                    <div class="w-full aspect-[3/4] bg-dex-bg flex items-center justify-center text-4xl">📒</div>
+                  }
+                  <div class="p-2">
+                    <p class="text-sm font-semibold text-dex-text truncate">{{ binder.name }}</p>
+                    <p class="text-xs text-dex-text-muted">{{ binder.cardCount }} card{{ binder.cardCount === 1 ? '' : 's' }}</p>
+                  </div>
                 </div>
               </button>
             }
