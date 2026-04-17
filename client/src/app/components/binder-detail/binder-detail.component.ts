@@ -4,11 +4,13 @@ import { BinderService, Binder, BinderCard, UpdateBinderRequest } from '../../se
 import { TcgDexService } from '../../services/tcgdex.service';
 import { TcgDexCardBrief } from '../../services/card-scan.service';
 import { CollectionService } from '../../services/collection.service';
+import { SetCacheService } from '../../services/set-cache.service';
+import { CardModalComponent } from '../card-modal/card-modal.component';
 
 @Component({
   selector: 'app-binder-detail',
   standalone: true,
-  imports: [],
+  imports: [CardModalComponent],
   template: `
     <div class="max-w-lg mx-auto p-4 pb-24 space-y-4">
       <!-- Header -->
@@ -41,7 +43,8 @@ import { CollectionService } from '../../services/collection.service';
         <p class="text-sm text-dex-text-muted">{{ cards().length }} card{{ cards().length === 1 ? '' : 's' }}</p>
         <div class="grid grid-cols-3 gap-3">
           @for (card of cards(); track card.id) {
-            <div class="bg-dex-surface rounded-xl p-2 border border-dex-surface-light group relative">
+            <div class="bg-dex-surface rounded-xl p-2 border border-dex-surface-light cardhover group relative cursor-pointer"
+                 (click)="zoomCard(card)">
               @if (card.cardImageUrl) {
                 <img [src]="card.cardImageUrl" [alt]="card.cardName"
                      class="w-full aspect-[3/4] object-contain rounded-lg bg-dex-bg mb-1" loading="lazy" />
@@ -49,7 +52,17 @@ import { CollectionService } from '../../services/collection.service';
                 <div class="w-full aspect-[3/4] rounded-lg bg-dex-bg flex items-center justify-center text-2xl mb-1">🃏</div>
               }
               <p class="text-xs font-medium text-dex-text truncate">{{ card.cardName }}</p>
-              <button (click)="removeCard(card)"
+              @if (setCache.getSet(setCache.setIdFromCardId(card.tcgdexCardId)); as set) {
+                <div class="flex items-center gap-1 mt-0.5">
+                  @if (set.symbol) {
+                    <img [src]="set.symbol + '.webp'" [alt]="set.name" class="h-3 w-3 object-contain" loading="lazy" />
+                  }
+                  @if (set.logo) {
+                    <img [src]="set.logo + '.webp'" [alt]="set.name" class="h-3 object-contain" loading="lazy" />
+                  }
+                </div>
+              }
+              <button (click)="$event.stopPropagation(); removeCard(card)"
                       class="absolute top-1 right-1 w-5 h-5 bg-black/50 text-white rounded-full text-xs leading-none opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 &times;
               </button>
@@ -160,6 +173,15 @@ import { CollectionService } from '../../services/collection.service';
       </div>
     }
 
+    <!-- Card Zoom Modal -->
+    @if (zoomedCard()?.cardImageUrl) {
+      <app-card-modal
+        [imageUrl]="zoomedCard()!.cardImageUrl!"
+        [cardName]="zoomedCard()!.cardName"
+        [visible]="true"
+        (close)="closeZoom()" />
+    }
+
     <!-- Edit Binder Modal -->
     @if (showEditModal()) {
       <div class="fixed inset-0 bg-black/60 z-[60] flex items-end justify-center"
@@ -230,6 +252,7 @@ export class BinderDetailComponent implements OnInit {
   private readonly binderService = inject(BinderService);
   private readonly tcgDex = inject(TcgDexService);
   private readonly collectionService = inject(CollectionService);
+  readonly setCache = inject(SetCacheService);
 
   readonly binder = signal<Binder | null>(null);
   readonly cards = signal<BinderCard[]>([]);
@@ -243,6 +266,7 @@ export class BinderDetailComponent implements OnInit {
   readonly selectedCardIds = signal<Set<string>>(new Set());
   readonly addingCards = signal(false);
 
+  readonly zoomedCard = signal<BinderCard | null>(null);
   readonly showEditModal = signal(false);
   readonly editBinderName = signal('');
   readonly editArtCard = signal<TcgDexCardBrief | null>(null);
@@ -255,6 +279,7 @@ export class BinderDetailComponent implements OnInit {
 
   ngOnInit(): void {
     this.binderId = this.route.snapshot.paramMap.get('id') ?? '';
+    this.setCache.ensureLoaded();
     this.loadBinder();
   }
 
@@ -365,6 +390,14 @@ export class BinderDetailComponent implements OnInit {
     } finally {
       this.addingCards.set(false);
     }
+  }
+
+  zoomCard(card: BinderCard): void {
+    if (card.cardImageUrl) this.zoomedCard.set(card);
+  }
+
+  closeZoom(): void {
+    this.zoomedCard.set(null);
   }
 
   async removeCard(card: BinderCard): Promise<void> {
