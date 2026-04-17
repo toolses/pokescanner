@@ -126,9 +126,10 @@ import { TcgDexCardBrief } from '../../services/card-scan.service';
 
     <!-- Create Binder Modal -->
     @if (showCreateModal()) {
-      <div class="fixed inset-0 bg-black/60 z-50 flex items-end justify-center"
+      <div class="fixed inset-0 bg-black/60 z-[60] flex items-end justify-center"
            (click)="closeCreateModal()">
-        <div class="bg-dex-surface w-full max-w-lg rounded-t-2xl p-5 space-y-4 pb-safe"
+        <div class="bg-dex-surface w-full max-w-lg rounded-t-2xl p-5 space-y-4 overflow-y-auto max-h-[90vh]"
+             style="padding-bottom: calc(1.25rem + env(safe-area-inset-bottom))"
              (click)="$event.stopPropagation()">
           <div class="flex items-center justify-between">
             <h2 class="text-lg font-bold text-dex-text">New Binder</h2>

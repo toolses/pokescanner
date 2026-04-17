@@ -56,7 +56,7 @@ import { TcgDexCardBrief } from '../../services/card-scan.service';
 
     <!-- Add Cards Overlay -->
     @if (showAddOverlay()) {
-      <div class="fixed inset-0 bg-black/60 z-50 flex flex-col"
+      <div class="fixed inset-0 bg-black/60 z-[60] flex flex-col"
            (click)="closeAddOverlay()">
         <div class="bg-dex-surface flex-1 mt-16 rounded-t-2xl flex flex-col overflow-hidden"
              (click)="$event.stopPropagation()">
