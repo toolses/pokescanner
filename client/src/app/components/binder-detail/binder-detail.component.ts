@@ -42,7 +42,8 @@ import { SetCacheService } from '../../services/set-cache.service';
         <p class="text-sm text-dex-text-muted">{{ cards().length }} card{{ cards().length === 1 ? '' : 's' }}</p>
         <div class="grid grid-cols-3 gap-3">
           @for (card of cards(); track card.id) {
-            <div class="bg-dex-surface rounded-xl p-2 border border-dex-surface-light cardhover group relative">
+            <div class="bg-dex-surface rounded-xl p-2 border border-dex-surface-light cardhover group relative cursor-pointer"
+                 (click)="zoomCard(card)">
               @if (card.cardImageUrl) {
                 <img [src]="card.cardImageUrl" [alt]="card.cardName"
                      class="w-full aspect-[3/4] object-contain rounded-lg bg-dex-bg mb-1" loading="lazy" />
@@ -60,7 +61,7 @@ import { SetCacheService } from '../../services/set-cache.service';
                   }
                 </div>
               }
-              <button (click)="removeCard(card)"
+              <button (click)="$event.stopPropagation(); removeCard(card)"
                       class="absolute top-1 right-1 w-5 h-5 bg-black/50 text-white rounded-full text-xs leading-none opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                 &times;
               </button>
@@ -171,6 +172,15 @@ import { SetCacheService } from '../../services/set-cache.service';
       </div>
     }
 
+    <!-- Card Zoom Modal -->
+    @if (zoomedCard()) {
+      <div class="fixed inset-0 bg-black/80 z-[70] flex items-center justify-center p-6"
+           (click)="closeZoom()">
+        <img [src]="zoomedCard()!.cardImageUrl" [alt]="zoomedCard()!.cardName"
+             class="max-w-full max-h-full object-contain rounded-2xl shadow-2xl" />
+      </div>
+    }
+
     <!-- Edit Binder Modal -->
     @if (showEditModal()) {
       <div class="fixed inset-0 bg-black/60 z-[60] flex items-end justify-center"
@@ -255,6 +265,7 @@ export class BinderDetailComponent implements OnInit {
   readonly selectedCardIds = signal<Set<string>>(new Set());
   readonly addingCards = signal(false);
 
+  readonly zoomedCard = signal<BinderCard | null>(null);
   readonly showEditModal = signal(false);
   readonly editBinderName = signal('');
   readonly editArtCard = signal<TcgDexCardBrief | null>(null);
@@ -378,6 +389,14 @@ export class BinderDetailComponent implements OnInit {
     } finally {
       this.addingCards.set(false);
     }
+  }
+
+  zoomCard(card: BinderCard): void {
+    if (card.cardImageUrl) this.zoomedCard.set(card);
+  }
+
+  closeZoom(): void {
+    this.zoomedCard.set(null);
   }
 
   async removeCard(card: BinderCard): Promise<void> {
